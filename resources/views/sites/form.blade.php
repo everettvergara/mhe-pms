@@ -1,0 +1,13 @@
+@extends('layouts.app')
+@section('title', $isEdit ? 'Edit Site' : 'New Site')
+@section('content')
+<x-page-header :title="$isEdit ? 'Edit Site' : 'New Site'" :breadcrumbs="['Masters' => null, 'Sites' => route('sites.index'), ($isEdit ? 'Edit' : 'New') => null]" />
+<form method="POST" action="{{ $isEdit ? route('sites.update', $site) : route('sites.store') }}">@csrf @if($isEdit) @method('PUT') @endif
+<div class="card"><div class="card-body row g-3">
+<div class="col-md-4"><label class="form-label">Site Code <span class="required-mark">*</span></label><input type="text" name="site_code" class="form-control @error('site_code') is-invalid @enderror" value="{{ old('site_code', $site->site_code) }}" required>@error('site_code')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<div class="col-md-8"><label class="form-label">Site Name <span class="required-mark">*</span></label><input type="text" name="site_name" class="form-control @error('site_name') is-invalid @enderror" value="{{ old('site_name', $site->site_name) }}" required>@error('site_name')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<div class="col-md-4"><label class="form-label">District <span class="required-mark">*</span></label><select name="district_id" class="form-select @error('district_id') is-invalid @enderror" required><option value="">Select district</option>@foreach($districts as $district)<option value="{{ $district->id }}" @selected((string) old('district_id', $site->district_id) === (string) $district->id)>{{ $district->district_name }}</option>@endforeach</select>@error('district_id')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+<div class="col-12"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2">{{ old('description', $site->description) }}</textarea></div>
+<div class="col-md-4"><label class="form-label">Status <span class="required-mark">*</span></label><select name="status" class="form-select">@foreach(\App\Enums\RecordStatus::cases() as $s)<option value="{{ $s->value }}" @selected(old('status', $site->status?->value)===$s->value)>{{ $s->value }}</option>@endforeach</select></div>
+</div><div class="card-footer d-flex gap-2"><button class="btn btn-primary">{{ $isEdit?'Update':'Save' }}</button><a href="{{ route('sites.index') }}" class="btn btn-secondary">Back</a></div></div></form>
+@endsection
