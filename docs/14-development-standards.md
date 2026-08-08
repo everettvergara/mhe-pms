@@ -39,6 +39,9 @@ Before implementing any feature:
 3.  Review existing code before creating new code.
 4.  Reuse existing components whenever possible.
 5.  Do not duplicate functionality.
+6.  For transaction photo uploads (PMS, MHE Downtime), follow
+    `docs/02-ui-ux-standards.md` → **Transaction Photo Attachments**
+    (`<x-transaction-photos>`, `files[]`, `ValidatesPhotoAttachments`).
 
 If documentation and implementation conflict, the documentation shall be
 considered the source of truth until updated.

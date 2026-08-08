@@ -36,8 +36,8 @@ class DemoDataSeeder extends Seeder
         $actionPlanService = app(ActionPlanService::class);
         $numberSequence = app(NumberSequenceService::class);
 
-        $site = Site::query()->where('site_code', 'MNL')->firstOrFail();
-        $mheType = MheType::query()->where('code', 'FL')->firstOrFail();
+        $site = Site::query()->where('site_code', 'SDC')->firstOrFail();
+        $mheType = MheType::query()->where('code', 'CB')->firstOrFail();
 
         $draft = $pmsService->createDraft($toyotaUser, [
             'site_id' => $site->id,
@@ -46,7 +46,7 @@ class DemoDataSeeder extends Seeder
             'date_to' => now()->subDays(2)->addHours(2),
             'next_schedule_date' => now()->addDays(30)->toDateString(),
             'mhe_type_id' => $mheType->id,
-            'unit_number' => 'FL-001',
+            'unit_number' => 'CB-001',
             'serial_number' => 'SN-10001',
         ]);
 
@@ -59,7 +59,7 @@ class DemoDataSeeder extends Seeder
             'date_to' => now()->subDays(5)->addHours(1),
             'next_schedule_date' => now()->addDays(7)->toDateString(),
             'mhe_type_id' => $mheType->id,
-            'unit_number' => 'FL-002',
+            'unit_number' => 'CB-002',
             'serial_number' => 'SN-10002',
             'status' => PmsStatus::NoFindings,
             'action_plan_status' => PmsActionPlanStatus::None,
@@ -79,7 +79,7 @@ class DemoDataSeeder extends Seeder
             'date_to' => now()->subDays(3)->addHours(2),
             'next_schedule_date' => now()->addDays(14)->toDateString(),
             'mhe_type_id' => $mheType->id,
-            'unit_number' => 'FL-003',
+            'unit_number' => 'CB-003',
             'serial_number' => 'SN-10003',
             'status' => PmsStatus::WithFindings,
             'action_plan_status' => PmsActionPlanStatus::None,

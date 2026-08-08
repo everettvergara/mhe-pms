@@ -1,0 +1,22 @@
+[
+    {"code": "Flat Tire", "name": "Flat Tire", "remarks": null},
+    {"code": "Cleanliness", "name": "Cleanliness", "remarks": null},
+    {"code": "Damage", "name": "Damage", "remarks": null},
+    {"code": "Key Switch w/ Key", "name": "Key Switch w/ Key", "remarks": null},
+    {"code": "FLuid Leaks", "name": "FLuid Leaks", "remarks": null},
+    {"code": "Tyres and Wheels", "name": "Tyres and Wheels", "remarks": null},
+    {"code": "Forks", "name": "Forks", "remarks": null},
+    {"code": "Chain, Cables & Hose", "name": "Chain, Cables & Hose", "remarks": null},
+    {"code": "Battery Connection", "name": "Battery Connection", "remarks": null},
+    {"code": "Safe Devices", "name": "Safe Devices", "remarks": null},
+    {"code": "Horn Sound", "name": "Horn Sound", "remarks": null},
+    {"code": "Steering", "name": "Steering", "remarks": null},
+    {"code": "Travel Controls", "name": "Travel Controls", "remarks": null},
+    {"code": "Hydraulic Controls", "name": "Hydraulic Controls", "remarks": null},
+    {"code": "Check Battery Water Level", "name": "Check Battery Water Level", "remarks": null},
+    {"code": "Service Brakes", "name": "Service Brakes", "remarks": null},
+    {"code": "LPG Level", "name": "LPG Level", "remarks": null},
+    {"code": "Hand Brake Lever", "name": "Hand Brake Lever", "remarks": null},
+    {"code": "Battery Charge Indicator", "name": "Battery Charge Indicator", "remarks": null},
+    {"code": "Emergency Stop", "name": "Emergency Stop", "remarks": null}
+]

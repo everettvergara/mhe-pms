@@ -13,9 +13,25 @@
                 <i class="bi bi-calendar-event me-2"></i>PMS Schedule
             </a>
         @endif
+        @if($can('mhe-downtimes.view'))
+            <a href="{{ route('mhes.summary') }}" class="nav-link {{ $active('mhes.summary') }}">
+                <i class="bi bi-bar-chart me-2"></i>MHE Summary
+            </a>
+            <a href="{{ route('mhes.utilization') }}" class="nav-link {{ $active('mhes.utilization') }}">
+                <i class="bi bi-grid me-2"></i>MHE Utilization
+            </a>
+            <a href="{{ route('dashboard.mhe-uptime') }}" class="nav-link {{ $active('dashboard.mhe-uptime') }}">
+                <i class="bi bi-graph-up me-2"></i>MHE Uptime
+            </a>
+        @endif
 
-        @if($can('pms.view') || $can('action-plans.view') || $can('action-plans.confirm'))
+        @if($can('pms.view') || $can('action-plans.view') || $can('action-plans.confirm') || $can('mhe-downtimes.view'))
             <div class="menu-group">Transactions</div>
+            @if($can('mhe-downtimes.view'))
+                <a href="{{ route('mhe-downtimes.index') }}" class="nav-link {{ $active('mhe-downtimes.*') }}">
+                    <i class="bi bi-exclamation-triangle me-2"></i>MHE Downtimes
+                </a>
+            @endif
             @if($can('pms.view'))
                 <a href="{{ route('pms.index') }}" class="nav-link {{ $active('pms.*') }}">
                     <i class="bi bi-clipboard-check me-2"></i>Preventive Maintenance
@@ -30,14 +46,22 @@
                 <a href="{{ route('action-plan-confirmations.index') }}" class="nav-link {{ $active('action-plan-confirmations.*') }}">
                     <i class="bi bi-check2-square me-2"></i>Action Plan Confirmation
                 </a>
+                <a href="{{ route('mhe-downtime-action-plan-confirmations.index') }}" class="nav-link {{ $active('mhe-downtime-action-plan-confirmations.*') }}">
+                    <i class="bi bi-check2-circle me-2"></i>Downtime Action Plan Confirmation
+                </a>
             @endif
         @endif
 
-        @if($can('suppliers.view') || $can('districts.view') || $can('sites.view') || $can('mhe-types.view') || $can('checklist-groups.view') || $can('checklist-items.view'))
+        @if($can('suppliers.view') || $can('regions.view') || $can('districts.view') || $can('sites.view') || $can('mhe-types.view') || $can('mhe-categories.view') || $can('mhe-inventories.view') || $can('checklist-groups.view') || $can('checklist-items.view'))
             <div class="menu-group">Masters</div>
             @if($can('suppliers.view'))
                 <a href="{{ route('suppliers.index') }}" class="nav-link {{ $active('suppliers.*') }}">
                     <i class="bi bi-building me-2"></i>Suppliers
+                </a>
+            @endif
+            @if($can('regions.view'))
+                <a href="{{ route('regions.index') }}" class="nav-link {{ $active('regions.*') }}">
+                    <i class="bi bi-globe-asia-australia me-2"></i>Regions
                 </a>
             @endif
             @if($can('districts.view'))
@@ -53,6 +77,16 @@
             @if($can('mhe-types.view'))
                 <a href="{{ route('mhe-types.index') }}" class="nav-link {{ $active('mhe-types.*') }}">
                     <i class="bi bi-truck me-2"></i>MHE Types
+                </a>
+            @endif
+            @if($can('mhe-categories.view'))
+                <a href="{{ route('mhe-categories.index') }}" class="nav-link {{ $active('mhe-categories.*') }}">
+                    <i class="bi bi-tags me-2"></i>MHE Categories
+                </a>
+            @endif
+            @if($can('mhe-inventories.view'))
+                <a href="{{ route('mhe-inventories.index') }}" class="nav-link {{ $active('mhe-inventories.*') }}">
+                    <i class="bi bi-box-seam me-2"></i>MHE Inventories
                 </a>
             @endif
             @if($can('checklist-groups.view'))

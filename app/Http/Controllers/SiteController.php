@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\HandlesListPage;
 use App\Http\Requests\StoreSiteRequest;
 use App\Http\Requests\UpdateSiteRequest;
 use App\Models\District;
+use App\Models\Region;
 use App\Models\Site;
 use App\Services\ActivityLogService;
 use App\Services\UserDataScopeService;
@@ -30,7 +31,7 @@ class SiteController extends Controller
     {
         $state = $this->resolveListState($request, 'sites', ['sort' => 'site_code', 'direction' => 'asc']);
 
-        $query = Site::query()->with('district');
+        $query = Site::query()->with(['district', 'region']);
         $this->userDataScopeService->scopeSite($query, $request->user());
 
         $sites = $this->paginateList($this->applyListQuery($query, $state), $state);
@@ -43,6 +44,7 @@ class SiteController extends Controller
         return view('sites.form', [
             'site' => new Site(['status' => RecordStatus::Active]),
             'districts' => District::query()->orderBy('district_name')->get(),
+            'regions' => Region::query()->orderBy('region_name')->get(),
             'isEdit' => false,
         ]);
     }
@@ -62,7 +64,7 @@ class SiteController extends Controller
 
     public function show(Site $site): View
     {
-        $site->load('district');
+        $site->load(['district', 'region']);
 
         return view('sites.show', compact('site'));
     }
@@ -72,6 +74,7 @@ class SiteController extends Controller
         return view('sites.form', [
             'site' => $site,
             'districts' => District::query()->orderBy('district_name')->get(),
+            'regions' => Region::query()->orderBy('region_name')->get(),
             'isEdit' => true,
         ]);
     }

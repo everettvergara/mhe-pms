@@ -12,12 +12,14 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             SupplierSeeder::class,
+            RegionSeeder::class,
             DistrictSeeder::class,
             SiteSeeder::class,
             MheTypeSeeder::class,
+            MheCategorySeeder::class,
+            MheInventorySeeder::class,
             ChecklistSeeder::class,
             UserSeeder::class,
-            DemoDataSeeder::class,
         ]);
     }
 }

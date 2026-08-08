@@ -20,6 +20,8 @@ class PmsService
         protected NumberSequenceService $numberSequenceService,
         protected ActivityLogService $activityLogService,
         protected UserDataScopeService $userDataScopeService,
+        protected PmsNotificationService $pmsNotificationService,
+        protected MheInventoryPmsScheduleService $mheInventoryPmsScheduleService,
     ) {}
 
     /**
@@ -69,7 +71,7 @@ class PmsService
                 'next_schedule_date' => $headerData['next_schedule_date'] ?? null,
                 'mhe_type_id' => $headerData['mhe_type_id'] ?? null,
                 'unit_number' => $headerData['unit_number'] ?? '',
-                'serial_number' => $headerData['serial_number'] ?? '',
+                'serial_number' => $headerData['serial_number'] ?? null,
                 'status' => PmsStatus::Draft,
                 'action_plan_status' => PmsActionPlanStatus::None,
                 'created_by' => $user->id,
@@ -127,7 +129,6 @@ class PmsService
             'next_schedule_date' => $headerData['next_schedule_date'] ?? $pmsHeader->next_schedule_date,
             'mhe_type_id' => $headerData['mhe_type_id'] ?? $pmsHeader->mhe_type_id,
             'unit_number' => $headerData['unit_number'] ?? $pmsHeader->unit_number,
-            'serial_number' => $headerData['serial_number'] ?? $pmsHeader->serial_number,
             'updated_by' => $user->id,
         ]);
 
@@ -187,6 +188,10 @@ class PmsService
                 "Saved PMS {$pmsHeader->pms_no} as final.",
             );
 
+            $this->pmsNotificationService->notifySubmitted($pmsHeader);
+
+            $this->mheInventoryPmsScheduleService->syncFromPmsHeader($pmsHeader->refresh());
+
             return $pmsHeader->refresh()->load(['pmsDetails.checklistItem.checklistGroup', 'supplier', 'site', 'mheType']);
         });
     }
@@ -202,12 +207,17 @@ class PmsService
         }
 
         return DB::transaction(function () use ($pmsHeader, $user) {
+            $siteId = (int) $pmsHeader->site_id;
+            $unitNumber = (string) $pmsHeader->unit_number;
+
             $pmsHeader->update([
                 'status' => PmsStatus::Draft,
                 'submitted_by' => null,
                 'submitted_at' => null,
                 'updated_by' => $user->id,
             ]);
+
+            $this->mheInventoryPmsScheduleService->recalculateForUnit($siteId, $unitNumber);
 
             $this->activityLogService->log(
                 $user,
@@ -232,12 +242,17 @@ class PmsService
         }
 
         return DB::transaction(function () use ($pmsHeader, $user) {
+            $siteId = (int) $pmsHeader->site_id;
+            $unitNumber = (string) $pmsHeader->unit_number;
+
             $pmsHeader->update([
                 'status' => PmsStatus::Cancelled,
                 'cancelled_by' => $user->id,
                 'cancelled_at' => now(),
                 'updated_by' => $user->id,
             ]);
+
+            $this->mheInventoryPmsScheduleService->recalculateForUnit($siteId, $unitNumber);
 
             $this->activityLogService->log(
                 $user,
@@ -294,7 +309,6 @@ class PmsService
             || blank($pmsHeader->next_schedule_date)
             || blank($pmsHeader->mhe_type_id)
             || blank($pmsHeader->unit_number)
-            || blank($pmsHeader->serial_number)
         ) {
             throw new InvalidArgumentException('PMS header information is incomplete.');
         }

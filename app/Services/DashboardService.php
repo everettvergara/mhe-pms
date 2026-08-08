@@ -3,9 +3,15 @@
 namespace App\Services;
 
 use App\Enums\ActionPlanStatus;
+use App\Enums\DowntimeActionPlanStatus;
+use App\Enums\DowntimeStatus;
 use App\Enums\PmsStatus;
+use App\Enums\RecordStatus;
 use App\Models\ActionPlan;
 use App\Models\ActivityLog;
+use App\Models\MheDowntime;
+use App\Models\MheDowntimeActionPlan;
+use App\Models\MheInventory;
 use App\Models\PmsHeader;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -30,6 +36,13 @@ class DashboardService
             ->whereHas('pmsDetail.pmsHeader');
         $this->userDataScopeService->scopeActionPlan($actionPlanQuery, $user);
 
+        $downtimeNeedsActionPlanQuery = MheDowntime::query()->needsActionPlan();
+        $this->userDataScopeService->scopeMheDowntime($downtimeNeedsActionPlanQuery, $user);
+
+        $downtimeActionPlanQuery = MheDowntimeActionPlan::query()
+            ->whereHas('mheDowntime');
+        $this->userDataScopeService->scopeMheDowntimeActionPlan($downtimeActionPlanQuery, $user);
+
         return [
             'kpis' => [
                 'total_pms' => (clone $pmsQuery)->count(),
@@ -44,9 +57,16 @@ class DashboardService
                     ->count(),
                 'confirmed_action_plans' => (clone $actionPlanQuery)->where('status', ActionPlanStatus::Confirmed)->count(),
                 'rejected_action_plans' => (clone $actionPlanQuery)->where('status', ActionPlanStatus::Rejected)->count(),
+                'downtimes_needing_action_plan' => (clone $downtimeNeedsActionPlanQuery)->count(),
+                'downtime_pending_action_plans' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::Pending)->count(),
+                'downtime_waiting_confirmation' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::WaitingForFastConfirmation)->count(),
+                'downtime_confirmed_action_plans' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::Confirmed)->count(),
+                'downtime_rejected_action_plans' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::Rejected)->count(),
             ],
             'pending_confirmations' => $this->pendingConfirmations($user),
+            'downtime_pending_confirmations' => $this->downtimePendingConfirmations($user),
             'pending_checklists' => $this->pendingChecklists($user),
+            'downtimes_needing_action_plan' => $this->downtimesNeedingActionPlan($user),
             'recent_pms' => $this->recentPms($user),
             'recent_confirmations' => $this->recentConfirmations($user),
             'charts' => [
@@ -74,6 +94,13 @@ class DashboardService
             ->whereHas('pmsDetail.pmsHeader');
         $this->userDataScopeService->scopeActionPlan($actionPlanQuery, $user);
 
+        $downtimeNeedsActionPlanQuery = MheDowntime::query()->needsActionPlan();
+        $this->userDataScopeService->scopeMheDowntime($downtimeNeedsActionPlanQuery, $user);
+
+        $downtimeActionPlanQuery = MheDowntimeActionPlan::query()
+            ->whereHas('mheDowntime');
+        $this->userDataScopeService->scopeMheDowntimeActionPlan($downtimeActionPlanQuery, $user);
+
         return [
             'kpis' => [
                 'draft_pms' => (clone $pmsQuery)->where('status', PmsStatus::Draft)->count(),
@@ -86,6 +113,11 @@ class DashboardService
                     ->count(),
                 'confirmed_action_plans' => (clone $actionPlanQuery)->where('status', ActionPlanStatus::Confirmed)->count(),
                 'rejected_action_plans' => (clone $actionPlanQuery)->where('status', ActionPlanStatus::Rejected)->count(),
+                'downtimes_needing_action_plan' => (clone $downtimeNeedsActionPlanQuery)->count(),
+                'downtime_pending_action_plans' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::Pending)->count(),
+                'downtime_waiting_confirmation' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::WaitingForFastConfirmation)->count(),
+                'downtime_confirmed_action_plans' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::Confirmed)->count(),
+                'downtime_rejected_action_plans' => (clone $downtimeActionPlanQuery)->where('status', DowntimeActionPlanStatus::Rejected)->count(),
             ],
             'draft_checklists' => (clone $pmsQuery)
                 ->where('status', PmsStatus::Draft)
@@ -118,6 +150,10 @@ class DashboardService
                 ->latest('confirmed_at')
                 ->limit(10)
                 ->get(),
+            'downtimes_needing_action_plan' => $this->downtimesNeedingActionPlan($user),
+            'downtime_action_plans_attention' => $this->downtimeActionPlansAttention($user),
+            'downtime_waiting_confirmation' => $this->downtimeWaitingConfirmation($user),
+            'downtime_recently_confirmed' => $this->downtimeRecentlyConfirmed($user),
             'upcoming_pms_schedule' => $this->upcomingPmsSchedule($user),
         ];
     }
@@ -127,54 +163,54 @@ class DashboardService
      */
     public function pmsSchedule(User $user): array
     {
-        $query = $this->scheduledPmsQuery($user);
+        $query = $this->scheduledInventoryQuery($user);
         $today = Carbon::today();
         $endOfWeek = $today->copy()->endOfWeek();
         $endOfMonth = $today->copy()->endOfMonth();
 
         return [
             'kpis' => [
-                'overdue' => (clone $query)->whereDate('next_schedule_date', '<', $today)->count(),
-                'due_today' => (clone $query)->whereDate('next_schedule_date', $today)->count(),
+                'overdue' => (clone $query)->whereDate('next_pms_date', '<', $today)->count(),
+                'due_today' => (clone $query)->whereDate('next_pms_date', $today)->count(),
                 'due_this_week' => (clone $query)
-                    ->whereDate('next_schedule_date', '>=', $today)
-                    ->whereDate('next_schedule_date', '<=', $endOfWeek)
+                    ->whereDate('next_pms_date', '>=', $today)
+                    ->whereDate('next_pms_date', '<=', $endOfWeek)
                     ->count(),
                 'due_this_month' => (clone $query)
-                    ->whereDate('next_schedule_date', '>=', $today)
-                    ->whereDate('next_schedule_date', '<=', $endOfMonth)
+                    ->whereDate('next_pms_date', '>=', $today)
+                    ->whereDate('next_pms_date', '<=', $endOfMonth)
                     ->count(),
                 'total_scheduled' => (clone $query)->count(),
             ],
             'records' => (clone $query)
-                ->orderBy('next_schedule_date')
+                ->orderBy('next_pms_date')
                 ->get(),
         ];
     }
 
     /**
-     * @return Collection<int, PmsHeader>
+     * @return Collection<int, MheInventory>
      */
     protected function upcomingPmsSchedule(?User $user = null, int $limit = 10): Collection
     {
-        return $this->scheduledPmsQuery($user)
-            ->orderBy('next_schedule_date')
+        return $this->scheduledInventoryQuery($user)
+            ->orderBy('next_pms_date')
             ->limit($limit)
             ->get();
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Builder<PmsHeader>
+     * @return \Illuminate\Database\Eloquent\Builder<MheInventory>
      */
-    protected function scheduledPmsQuery(?User $user = null): \Illuminate\Database\Eloquent\Builder
+    protected function scheduledInventoryQuery(?User $user = null): \Illuminate\Database\Eloquent\Builder
     {
-        $query = PmsHeader::query()
-            ->whereNotNull('next_schedule_date')
-            ->where('status', '!=', PmsStatus::Cancelled)
-            ->with(['supplier', 'site', 'mheType']);
+        $query = MheInventory::query()
+            ->whereNotNull('next_pms_date')
+            ->where('equipment_status', RecordStatus::Active)
+            ->with(['supplier', 'siteRelation', 'mheType', 'lastPmsHeader']);
 
         if ($user !== null) {
-            $this->userDataScopeService->scopePmsHeader($query, $user);
+            $this->userDataScopeService->scopeMheInventory($query, $user);
         }
 
         return $query;
@@ -261,6 +297,23 @@ class DashboardService
     }
 
     /**
+     * @return Collection<int, MheDowntime>
+     */
+    protected function downtimesNeedingActionPlan(User $user, int $limit = 10): Collection
+    {
+        $query = MheDowntime::query()
+            ->needsActionPlan()
+            ->with(['site', 'mheType', 'supplier', 'mheInventory']);
+
+        $this->userDataScopeService->scopeMheDowntime($query, $user);
+
+        return $query
+            ->latest('posted_at')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
      * @return array<string, int>
      */
     protected function pmsStatusDistribution(User $user): array
@@ -290,5 +343,61 @@ class DashboardService
             ->pluck('total', 'status')
             ->mapWithKeys(fn ($total, $status) => [(string) $status => (int) $total])
             ->all();
+    }
+
+    /**
+     * @return Collection<int, MheDowntimeActionPlan>
+     */
+    protected function downtimePendingConfirmations(User $user): Collection
+    {
+        $query = MheDowntimeActionPlan::query()
+            ->where('status', DowntimeActionPlanStatus::WaitingForFastConfirmation)
+            ->with(['mheDowntime.supplier', 'mheDowntime.site', 'mheDowntime.mheInventory']);
+
+        $this->userDataScopeService->scopeMheDowntimeActionPlan($query, $user);
+
+        return $query->latest('updated_at')->limit(10)->get();
+    }
+
+    /**
+     * @return Collection<int, MheDowntimeActionPlan>
+     */
+    protected function downtimeActionPlansAttention(User $user): Collection
+    {
+        $query = MheDowntimeActionPlan::query()
+            ->whereIn('status', [DowntimeActionPlanStatus::Pending, DowntimeActionPlanStatus::Rejected])
+            ->with(['mheDowntime.site', 'mheDowntime.mheInventory']);
+
+        $this->userDataScopeService->scopeMheDowntimeActionPlan($query, $user);
+
+        return $query->orderBy('timeline_to')->limit(10)->get();
+    }
+
+    /**
+     * @return Collection<int, MheDowntimeActionPlan>
+     */
+    protected function downtimeWaitingConfirmation(User $user): Collection
+    {
+        $query = MheDowntimeActionPlan::query()
+            ->where('status', DowntimeActionPlanStatus::WaitingForFastConfirmation)
+            ->with(['mheDowntime.site', 'mheDowntime.mheInventory']);
+
+        $this->userDataScopeService->scopeMheDowntimeActionPlan($query, $user);
+
+        return $query->latest('updated_at')->limit(10)->get();
+    }
+
+    /**
+     * @return Collection<int, MheDowntimeActionPlan>
+     */
+    protected function downtimeRecentlyConfirmed(User $user): Collection
+    {
+        $query = MheDowntimeActionPlan::query()
+            ->where('status', DowntimeActionPlanStatus::Confirmed)
+            ->with(['mheDowntime.site', 'mheDowntime.mheInventory']);
+
+        $this->userDataScopeService->scopeMheDowntimeActionPlan($query, $user);
+
+        return $query->latest('confirmed_at')->limit(10)->get();
     }
 }

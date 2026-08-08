@@ -30,4 +30,9 @@ class MheType extends Model
     {
         return $this->hasMany(PmsHeader::class);
     }
+
+    public function mheInventories(): HasMany
+    {
+        return $this->hasMany(MheInventory::class);
+    }
 }

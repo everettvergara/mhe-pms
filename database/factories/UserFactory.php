@@ -46,4 +46,13 @@ class UserFactory extends Factory
                 ?? Role::factory()->supplier(),
         ]);
     }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::query()->where('slug', Role::SLUG_FAST_ADMINISTRATOR)->value('id')
+                ?? Role::factory(),
+            'is_super_admin' => true,
+        ]);
+    }
 }

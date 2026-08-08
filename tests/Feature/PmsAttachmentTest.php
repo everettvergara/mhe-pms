@@ -213,7 +213,7 @@ class PmsAttachmentTest extends TestCase
 
     public function test_fast_admin_can_view_submitted_pms_with_attachments(): void
     {
-        $admin = User::factory()->create();
+        $admin = User::factory()->superAdmin()->create();
         $pms = $this->createDraftPms($this->supplierUser);
         $path = UploadedFile::fake()->image('photo.jpg')->store('pms-attachments/'.$pms->id, 'public');
         $pms->attachments()->create([
@@ -257,7 +257,6 @@ class PmsAttachmentTest extends TestCase
             'next_schedule_date' => now()->addMonth(),
             'mhe_type_id' => $this->mheType->id,
             'unit_number' => 'U-001',
-            'serial_number' => 'S-001',
             'status' => PmsStatus::Draft,
             'created_by' => $user->id,
             'updated_by' => $user->id,

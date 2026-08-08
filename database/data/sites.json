@@ -1,0 +1,1922 @@
+[
+  {
+    "site_code": "NDC",
+    "site_name": "NDC",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": "Duplicate of GMA DC (id: 100)",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "SDC",
+    "site_name": "SDC",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "VDC",
+    "site_name": "VDC",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": "DUPLICATE of CEBU DC (101)",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "D&L Pasig",
+    "site_name": "D&L Pasig",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "DNL Tanauan",
+    "site_name": "DNL Tanauan",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "DMPICGY",
+    "site_name": "DMPICGY",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "DMPI Bugo",
+    "site_name": "DMPI Bugo",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "DMPICAB",
+    "site_name": "DMPICAB",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JWSL Pin",
+    "site_name": "JWSL Pin",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JWSL Tayud Dry/ Cold",
+    "site_name": "JWSL Tayud Dry/ Cold",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JWSL Pasig",
+    "site_name": "JWSL Pasig",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JWSL Bar",
+    "site_name": "JWSL Bar",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MDLZ  Sucat",
+    "site_name": "MDLZ  Sucat",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MDLZ PASIG",
+    "site_name": "MDLZ PASIG",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RFM SILANGAN",
+    "site_name": "RFM SILANGAN",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RFM DIEZMO",
+    "site_name": "RFM DIEZMO",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JTI BARANDAL",
+    "site_name": "JTI BARANDAL",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RR DRY SILANGAN",
+    "site_name": "RR DRY SILANGAN",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SITELOG RR",
+    "site_name": "RR Sitelog",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "EPI Taguig",
+    "site_name": "EPI Taguig",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI Pasig",
+    "site_name": "CDI Pasig",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI La Union",
+    "site_name": "CDI La Union",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI Cebu",
+    "site_name": "CDI Cebu",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI Pam",
+    "site_name": "CDI Pam",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI Bat",
+    "site_name": "CDI Bat",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SUNLIFE",
+    "site_name": "SUNLIFE",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SUPER 8 Malolos",
+    "site_name": "SUPER 8 Malolos",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SUPER 8 Pasig",
+    "site_name": "SUPER 8 Pasig",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "EPI Cebu",
+    "site_name": "EPI Cebu",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alfamart Mar",
+    "site_name": "Alfamart Mar",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alfamart Silang",
+    "site_name": "Alfamart Silang",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Splash",
+    "site_name": "Splash",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Shell JT",
+    "site_name": "Shell JT",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Shell Ceb",
+    "site_name": "Shell Ceb",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Shell Bac",
+    "site_name": "Shell Bac",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Shell CDO",
+    "site_name": "Shell CDO",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Shell Dav",
+    "site_name": "Shell Dav",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NAM",
+    "site_name": "NAM",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NAM ANNEX",
+    "site_name": "NAM ANNEX",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NAC(DUP)",
+    "site_name": "NAC(DUP)",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": "Duplicate of Nutri Asia Cabuyao",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "NAC EXTENSION  Silangan ",
+    "site_name": "NAC EXTENSION  Silangan ",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SSD",
+    "site_name": "SSD",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NAD",
+    "site_name": "NAD",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SSM",
+    "site_name": "SSM",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "KC Val",
+    "site_name": "KC Val",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "KC Cebu ",
+    "site_name": "KC Cebu ",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JJPI Cabuyao",
+    "site_name": "JJPI Cabuyao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JJPI Cebu",
+    "site_name": "JJPI Cebu",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PC Cebu",
+    "site_name": "PC Cebu",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PC Plaridel",
+    "site_name": "PC Plaridel",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Kalinisan",
+    "site_name": "Kalinisan",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GCI CEBU",
+    "site_name": "GCI CEBU",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GCI Pampanga",
+    "site_name": "GCI Pampanga",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GCI Dasma",
+    "site_name": "GCI Dasma",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GCI Makiling",
+    "site_name": "GCI Makiling",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GCI Severina",
+    "site_name": "GCI Severina",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NBS Muntinlupa",
+    "site_name": "NBS Muntinlupa",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JSU Bulacan",
+    "site_name": "JSU Bulacan",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JSU DAVAO",
+    "site_name": "JSU DAVAO",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JSU ilo-ilo",
+    "site_name": "JS Unitrade Iloilo",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Abbott",
+    "site_name": "Abbott",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Distriphil",
+    "site_name": "Distriphil",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "URC CEBU TABUK",
+    "site_name": "URC CEBU TABUK",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "URC SAN FERNANDO",
+    "site_name": "URC SAN FERNANDO",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "URC CDO",
+    "site_name": "URC CDO",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Prifoods CEBU",
+    "site_name": "Prifoods CEBU",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Prifoods DAVAO",
+    "site_name": "Prifoods DAVAO",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Prifoods LAGUNA",
+    "site_name": "Prifoods LAGUNA",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NEXTRADE MEY",
+    "site_name": "Nextrade Meycauayan",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Nextrade Sucat -Cold",
+    "site_name": "Nextrade Sucat",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NEXTRADE CEBU",
+    "site_name": "Nextrade CEBU",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NEXTRADE ILOILO",
+    "site_name": "Nextrade ILOILO",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CITY HARDWARE",
+    "site_name": "CITY HARDWARE",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": "Disabled Due To Duplicate Site 'DAVAO HARDWARE CITI'",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "RA DAVAO",
+    "site_name": "RA DAVAO",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MARFA OFFICE",
+    "site_name": "MARFA OFFICE",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Philmico",
+    "site_name": "Philmico",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "LipaRetail",
+    "site_name": "LipaRetail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JJPI Retail",
+    "site_name": "JJPI Retail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SDC Retail",
+    "site_name": "SDC Retail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NPI Tanauan ",
+    "site_name": "NPI Tanauan ",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDO DMPI",
+    "site_name": "CDO DMPI",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NAM FTMC",
+    "site_name": "NAM FTMC",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NPI Cebu",
+    "site_name": "NPI Cebu",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "ZUELLIG TAG",
+    "site_name": "ZUELLIG TAG",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SSM FTMC",
+    "site_name": "SSM FTMC",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NPI CDO",
+    "site_name": "NPI CDO",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alabang",
+    "site_name": "Alabang",
+    "district_code": "FTMC",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NAC FTMC",
+    "site_name": "NAC FTMC",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "ABOTT",
+    "site_name": "ABOTT",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MDI",
+    "site_name": "MDI",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PepSi",
+    "site_name": "Tunasan Pepsi",
+    "district_code": "FTMC",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PNG Cabuyao",
+    "site_name": "PNG Cabuyao",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PMFTC Tanauan",
+    "site_name": "PMFTC Tanauan",
+    "district_code": "FTMC",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "TAYUD COLD FACILITY",
+    "site_name": "TAYUD COLD FACILITY",
+    "district_code": "FCCSI",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "IMUS FOOD PANDA",
+    "site_name": "IMUS FOOD PANDA",
+    "district_code": "FCCSI",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "IMUS COLD EXTENSION",
+    "site_name": "IMUS COLD EXTENSION",
+    "district_code": "FCCSI",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "IMUS COLDCHAIN",
+    "site_name": "IMUS COLDCHAIN",
+    "district_code": "FCCSI",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alabang Main",
+    "site_name": "Alabang Main",
+    "district_code": "MAIN Office",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SLDC - Batino",
+    "site_name": "SLDC - Batino",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GMA DC",
+    "site_name": "GMA DC",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": "DUP SITES\\r\\n - NDC\\r\\n - NDC Meycauayan",
+    "status": "Active"
+  },
+  {
+    "site_code": "CEBU DC",
+    "site_name": "CEBU DC",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": "DUP SITES\\r\\n - VDC Cebu (139)\\r\\n - VDC (3)",
+    "status": "Active"
+  },
+  {
+    "site_code": "D&L Tanauan",
+    "site_name": "D&L Tanauan",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": "duplicate of DNL Tanauan",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "DMPI Cabuyao",
+    "site_name": "DMPI Cabuyao",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC CEBU",
+    "site_name": "JFC CEBU",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "COLD/DRY",
+    "site_name": "COLD/DRY",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC PINNACLE",
+    "site_name": "JFC PINNACLE",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "COLD",
+    "site_name": "COLD",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC LAGUNA",
+    "site_name": "JFC LAGUNA",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Mondelez Sucat",
+    "site_name": "Mondelez",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RFM Cabuyao D2b",
+    "site_name": "RFM Cabuyao D2b",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Red Ribbon Laguna",
+    "site_name": "RR Laguna (FG)",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Red Ribbon Sitelog",
+    "site_name": "Red Ribbon Sitelog",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "EPI Marfa",
+    "site_name": "EPI Marfa",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Silver Swan Malabon",
+    "site_name": "Silver Swan Malabon",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Sunlife Taguig",
+    "site_name": "Sunlife Taguig",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Colpal",
+    "site_name": "Colpal",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JTI Main",
+    "site_name": "JTI Main",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JTI OVF",
+    "site_name": "JTI OVF",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alfamart Calamba",
+    "site_name": "Alfamart - Calamba",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Nutri Asia Marilao MP",
+    "site_name": "Nutri Asia Marilao MP",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Nutri Asia Marilao Annex",
+    "site_name": "Nutri Asia Marilao Annex",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Nutri Asia Cabuyao",
+    "site_name": "Nutri Asia Cabuyao",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Nutri Asia Cabuyao Silangan",
+    "site_name": "Nutri Asia Cabuyao Silangan",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Nutri Asia Davao",
+    "site_name": "Nutri Asia Davao",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Silver Swan Davao",
+    "site_name": "Silver Swan Davao",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NPI SDC",
+    "site_name": "NPI SDC",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": "Duplicate of SDC",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "NPI LIPA",
+    "site_name": "NPI LIPA",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PMFTC",
+    "site_name": "PMFTC",
+    "district_code": "FTMC",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JJPI",
+    "site_name": "JJPI",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "P&G",
+    "site_name": "P&G",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SAN PEDRO",
+    "site_name": "SAN PEDRO",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "ZUELLIG",
+    "site_name": "ZUELLIG",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SS",
+    "site_name": "SS",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "DMPI",
+    "site_name": "DMPI",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FSC",
+    "site_name": "FSC",
+    "district_code": "MAIN Office",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SDC Batino",
+    "site_name": "SDC Batino",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": "Duplicate of Site SDC (site_id 2)",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "NDC Meycauayan",
+    "site_name": "NDC Meycauayan",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": "Duplicate of GMA DC (id: 100)",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "VDC Cebu",
+    "site_name": "VDC Cebu",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": "DUPLICATE of CEBU DC (101)",
+    "status": "Inactive"
+  },
+  {
+    "site_code": "PNG Tanauan",
+    "site_name": "PNG Tanauan",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "DMPI Cab",
+    "site_name": "DMPI Cab",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC Cebu Cold",
+    "site_name": "JFC Cebu Cold",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC Sucat",
+    "site_name": "JFC Sucat",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC Barandal",
+    "site_name": "JFC Barandal",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RFM Cabuyao D2a",
+    "site_name": "RFM Cabuyao D2a",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RR Canlubang",
+    "site_name": "RR Canlubang",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI Pampanga",
+    "site_name": "CDI Pampanga",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI Batangas",
+    "site_name": "CDI Batangas",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDI La Union-ee149",
+    "site_name": "CDI La Union (ee149)",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alfamart Marilao",
+    "site_name": "Alfamart Marilao",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Shell Bacolod",
+    "site_name": "Shell Bacolod",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "KC Valenzuela",
+    "site_name": "KC Valenzuela",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NPI TAN",
+    "site_name": "NPI TAN",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Imus Cold",
+    "site_name": "Imus Cold",
+    "district_code": "FCCSI",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Citihardware Davao",
+    "site_name": "Citihardware Davao",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": "Old name 'DAVAO HARDWARE CITI', under District 5",
+    "status": "Active"
+  },
+  {
+    "site_code": "PC Bacolod",
+    "site_name": "PC Bacolod",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "URC Cagayan",
+    "site_name": "URC Cagayan",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Philmico Cebu",
+    "site_name": "Philmico Cebu",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RA Marikina",
+    "site_name": "RA Marikina",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GCI Cavite",
+    "site_name": "GCI Cavite",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Kalinisan Carmona",
+    "site_name": "Kalinisan Carmona",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Abbott Cabuyao",
+    "site_name": "Abbott Cabuyao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RFM Calamba",
+    "site_name": "RFM Calamba",
+    "district_code": "District 2A",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Kimberly Clark Cebu",
+    "site_name": "Kimberly Clark Cebu",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC Calamba",
+    "site_name": "JFC Calamba",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CEBU TAYUD",
+    "site_name": "CEBU TAYUD",
+    "district_code": "FCCSI",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC Cebu Dry",
+    "site_name": "JFC Cebu Dry",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JNTL Cebu",
+    "site_name": "JNTL Cebu",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PILMICO CEBU",
+    "site_name": "PILMICO CEBU",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC Bicutan Dry",
+    "site_name": "JFC Bicutan Dry",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JFC Bicutan Cold",
+    "site_name": "JFC Bicutan Cold",
+    "district_code": "District 2b",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "IKEA BULACAN",
+    "site_name": "IKEA BULACAN",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NT Bulacan",
+    "site_name": "NT Bulacan",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Splash Valenzuela",
+    "site_name": "Splash Valenzuela",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "D2 Bravo",
+    "site_name": "D2 Bravo",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JNTL Cabuyao",
+    "site_name": "JNTL Cabuyao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Personal Collection Davao",
+    "site_name": "Personal Collection Davao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Cagayan Distribution Center",
+    "site_name": "Cagayan Distribution Center",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MONDE",
+    "site_name": "MONDE",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PAXF",
+    "site_name": "PAXF",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "LCL",
+    "site_name": "LCL",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Navotas",
+    "site_name": "Navotas",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CABUYAO FAPC",
+    "site_name": "CABUYAO FAPC",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "BATANGAS JJPI",
+    "site_name": "BATANGAS JJPI",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NAXF",
+    "site_name": "Murall NAXF",
+    "district_code": "District 3",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "SAN MIGUEL",
+    "site_name": "SAN MIGUEL",
+    "district_code": "District 3",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "URC Davao",
+    "site_name": "URC Davao",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "GCI Mabalacat",
+    "site_name": "GCI Mabalacat",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Hundai Taguig",
+    "site_name": "Hundai Taguig",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Batangas FAPC",
+    "site_name": "Batangas FAPC",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Libis Copal",
+    "site_name": "Libis Copal",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Cainta Mondelez",
+    "site_name": "Cainta Mondelez",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Laguna Monde Nissin",
+    "site_name": "Laguna Monde Nissin / Multi Accounts",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Cabuyao P&G ULP",
+    "site_name": "Cabuyao P&G ULP",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NPI BATINO",
+    "site_name": "NPI BATINO",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC CAGAYAN",
+    "site_name": "FLC CAGAYAN",
+    "district_code": "DEFAULT",
+    "region_code": "Mindanao",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC BUTUAN",
+    "site_name": "FLC BUTUAN",
+    "district_code": "DEFAULT",
+    "region_code": "Mindanao",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC DAVAO",
+    "site_name": "FLC DAVAO",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": "N/A",
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC GENSAN",
+    "site_name": "FLC GENSAN",
+    "district_code": "DEFAULT",
+    "region_code": "Mindanao",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC COTABATO",
+    "site_name": "FLC COTABATO",
+    "district_code": "DEFAULT",
+    "region_code": "Mindanao",
+    "description": "N/A",
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC ZAMBOANGA",
+    "site_name": "FLC ZAMBOANGA",
+    "district_code": "DEFAULT",
+    "region_code": "Mindanao",
+    "description": "N/A",
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC CEBU CANDUMAN",
+    "site_name": "FLC CEBU CANDUMAN",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC CEBU PALMA",
+    "site_name": "FLC CEBU PALMA",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC ILO-ILO",
+    "site_name": "FLC ILO-ILO",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC BACOLOD",
+    "site_name": "FLC BACOLOD",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC PALAWAN",
+    "site_name": "FLC PALAWAN",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC TAGBILARAN",
+    "site_name": "FLC TAGBILARAN",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC TACLOBAN",
+    "site_name": "FLC TACLOBAN",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": "N/A",
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC DUMAGUETE",
+    "site_name": "FLC DUMAGUETE",
+    "district_code": "DEFAULT",
+    "region_code": "Vizayas",
+    "description": "N/A",
+    "status": "Active"
+  },
+  {
+    "site_code": "RA CDO",
+    "site_name": "RA CDO",
+    "district_code": "District 6",
+    "region_code": "Mindanao",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "BALLAHO",
+    "site_name": "BALLAHO",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Cagayan Robinsons",
+    "site_name": "Cagayan Robinsons",
+    "district_code": "DEFAULT",
+    "region_code": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NBS Cabuyao",
+    "site_name": "NBS Cabuyao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC MAS",
+    "site_name": "FLC Multi Accounts South",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC IHS",
+    "site_name": "FLC In house Silangan",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Unilever MMX",
+    "site_name": "Unilever MMX",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Watsons Pampanga",
+    "site_name": "Watsons Pampanga",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Mitsui",
+    "site_name": "Mitsui",
+    "district_code": "District 1",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JTI WH1",
+    "site_name": "JTI WH1",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JTI WH1-ee233",
+    "site_name": "JTI WH1 (ee233)",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "JTI WH2",
+    "site_name": "JTI WH2",
+    "district_code": "District 3",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alfamart Mexico",
+    "site_name": "Alfamart Mexico",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alfamart Sariaya",
+    "site_name": "Alfamart Sariaya",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Shell JT Pasig",
+    "site_name": "Shell JT Pasig",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "RA CAGAYAN",
+    "site_name": "RA CAGAYAN",
+    "district_code": "District 6",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "CDC Retail",
+    "site_name": "CDC Retail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "KC Valenzuela Retail",
+    "site_name": "KC Valenzuela Retail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "ABBOTT Retail",
+    "site_name": "ABBOTT Retail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "NBS Retail",
+    "site_name": "NBS Retail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "WATSONS CABUYAO Retail",
+    "site_name": "WATSONS CABUYAO Retail",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "FLC Nutri Asia",
+    "site_name": "FLC Nutri Asia",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Watson Binan",
+    "site_name": "Watson Binan",
+    "district_code": "FTMC",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Ormoc",
+    "site_name": "Ormoc",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Midea",
+    "site_name": "Midea",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MN Mabalacat Pampanga",
+    "site_name": "Monde Nissin Mabalacat Pampanga",
+    "district_code": "DEFAULT",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "ULP Cabuyao",
+    "site_name": "ULP Cabuyao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MMX-ULP Cabuyao",
+    "site_name": "MMX-ULP Cabuyao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "MNC Pampanga",
+    "site_name": "MNC Pampanga",
+    "district_code": "District 7",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Midea Cabuyao",
+    "site_name": "Midea Cabuyao",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "Alfamart Batangas",
+    "site_name": "Alfamart Batangas",
+    "district_code": "District 4",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "site_code": "PC ZABARTE",
+    "site_name": "PC Zabarte",
+    "district_code": "District 5",
+    "region_code": null,
+    "description": null,
+    "status": "Active"
+  }
+]

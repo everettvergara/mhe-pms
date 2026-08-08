@@ -7,11 +7,10 @@ use App\Http\Controllers\Concerns\HandlesListPage;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
-use App\Models\Site;
 use App\Models\Supplier;
-use App\Models\SupplierSite;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Services\UserAssignmentService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +23,7 @@ class UserController extends Controller
 
     public function __construct(
         protected ActivityLogService $activityLogService,
+        protected UserAssignmentService $userAssignmentService,
     ) {
         $this->authorizeResource(User::class, 'user');
     }
@@ -40,18 +40,10 @@ class UserController extends Controller
 
     public function create(): View
     {
-        $supplierRoleId = Role::query()->where('slug', Role::SLUG_SUPPLIER_USER)->value('id');
-
-        return view('users.form', [
-            'user' => new User(['status' => UserStatus::Active, 'is_super_admin' => false]),
-            'roles' => Role::query()->orderBy('name')->get(),
-            'suppliers' => Supplier::query()->orderBy('supplier_name')->get(),
-            'sites' => Site::query()->orderBy('site_name')->get(),
-            'assignedSupplierIds' => [],
-            'assignedSiteIds' => [],
-            'supplierRoleId' => $supplierRoleId,
-            'isEdit' => false,
-        ]);
+        return view('users.form', $this->formViewData(
+            new User(['status' => UserStatus::Active, 'is_super_admin' => false]),
+            false,
+        ));
     }
 
     public function store(StoreUserRequest $request): RedirectResponse
@@ -77,26 +69,19 @@ class UserController extends Controller
 
     public function show(User $user): View
     {
-        $user->load(['role', 'suppliers', 'sites']);
+        $user->load(['role', 'suppliers', 'sites.district']);
 
-        return view('users.show', compact('user'));
+        $sitesByDistrict = $this->userAssignmentService->groupSitesByDistrict($user);
+        $assignedDistrictNames = $this->userAssignmentService->assignedDistrictNames($user);
+
+        return view('users.show', compact('user', 'sitesByDistrict', 'assignedDistrictNames'));
     }
 
     public function edit(User $user): View
     {
         $user->load(['suppliers', 'sites']);
-        $supplierRoleId = Role::query()->where('slug', Role::SLUG_SUPPLIER_USER)->value('id');
 
-        return view('users.form', [
-            'user' => $user,
-            'roles' => Role::query()->orderBy('name')->get(),
-            'suppliers' => Supplier::query()->orderBy('supplier_name')->get(),
-            'sites' => Site::query()->orderBy('site_name')->get(),
-            'assignedSupplierIds' => $user->assignedSupplierIds(),
-            'assignedSiteIds' => $user->assignedSiteIds(),
-            'supplierRoleId' => $supplierRoleId,
-            'isEdit' => true,
-        ]);
+        return view('users.form', $this->formViewData($user, true));
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
@@ -135,6 +120,25 @@ class UserController extends Controller
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    protected function formViewData(User $user, bool $isEdit): array
+    {
+        $supplierRoleId = Role::query()->where('slug', Role::SLUG_SUPPLIER_USER)->value('id');
+
+        return [
+            'user' => $user,
+            'roles' => Role::query()->orderBy('name')->get(),
+            'suppliers' => Supplier::query()->orderBy('supplier_name')->get(),
+            'districtsWithSites' => $this->userAssignmentService->districtsWithActiveSites(),
+            'assignedSupplierIds' => $isEdit ? $user->assignedSupplierIds() : [],
+            'assignedSiteIds' => $isEdit ? $user->assignedSiteIds() : [],
+            'supplierRoleId' => $supplierRoleId,
+            'isEdit' => $isEdit,
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
@@ -160,30 +164,22 @@ class UserController extends Controller
         if ($user->isSuperAdmin()) {
             $user->update(['supplier_id' => null]);
             $user->suppliers()->sync([]);
-            SupplierSite::query()->where('user_id', $user->id)->delete();
+            $user->sites()->sync([]);
 
             return;
         }
 
-        if (! $user->isSupplier()) {
-            $user->update(['supplier_id' => null]);
-            $user->suppliers()->sync([]);
-            SupplierSite::query()->where('user_id', $user->id)->delete();
+        if ($user->isSupplier()) {
+            $user->suppliers()->sync($supplierIds);
+            $user->update(['supplier_id' => $supplierIds[0] ?? null]);
+            $user->sites()->sync($siteIds);
 
             return;
         }
 
-        $user->suppliers()->sync($supplierIds);
-        $user->update(['supplier_id' => $supplierIds[0] ?? null]);
-
-        SupplierSite::query()->where('user_id', $user->id)->delete();
-
-        foreach ($siteIds as $siteId) {
-            SupplierSite::query()->create([
-                'user_id' => $user->id,
-                'site_id' => $siteId,
-            ]);
-        }
+        $user->update(['supplier_id' => null]);
+        $user->suppliers()->sync([]);
+        $user->sites()->sync($siteIds);
     }
 
     protected function defaultSortColumn(): string

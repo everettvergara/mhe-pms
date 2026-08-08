@@ -13,7 +13,29 @@
 <dt class="col-sm-3">Super Admin</dt><dd class="col-sm-9">{{ $user->isSuperAdmin() ? 'Yes' : 'No' }}</dd>
 @if(!$user->isSuperAdmin())
 <dt class="col-sm-3">Assigned Suppliers</dt><dd class="col-sm-9">{{ $user->suppliers->pluck('supplier_name')->join(', ') ?: '—' }}</dd>
-<dt class="col-sm-3">Assigned Sites</dt><dd class="col-sm-9">{{ $user->sites->pluck('site_name')->join(', ') ?: '—' }}</dd>
+<dt class="col-sm-3">Assigned Districts</dt>
+<dd class="col-sm-9">
+    @if($assignedDistrictNames === [])
+        <span class="text-warning">No site access assigned</span>
+    @else
+        {{ implode(', ', $assignedDistrictNames) }}
+    @endif
+</dd>
+<dt class="col-sm-3">Assigned Sites</dt>
+<dd class="col-sm-9">
+    @if($sitesByDistrict->isEmpty())
+        <span class="text-warning">No sites assigned — user cannot access scoped data.</span>
+    @else
+        <div class="d-flex flex-column gap-2">
+            @foreach($sitesByDistrict as $districtName => $sites)
+                <div>
+                    <div class="fw-semibold">{{ $districtName }}</div>
+                    <div>{{ $sites->pluck('site_name')->join(', ') }}</div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+</dd>
 @endif
 </dl></div></div>
 <x-audit-info :model="$user"/>

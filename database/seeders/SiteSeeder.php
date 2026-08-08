@@ -4,30 +4,44 @@ namespace Database\Seeders;
 
 use App\Enums\RecordStatus;
 use App\Models\District;
+use App\Models\Region;
 use App\Models\Site;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 
 class SiteSeeder extends Seeder
 {
     public function run(): void
     {
-        $district = District::query()->where('district_code', 'PH')->first();
+        $rows = json_decode(File::get(database_path('data/sites.json')), true, 512, JSON_THROW_ON_ERROR);
 
-        $sites = [
-            ['site_code' => 'MNL', 'site_name' => 'FAST Manila', 'description' => 'Manila warehouse'],
-            ['site_code' => 'LAG', 'site_name' => 'FAST Laguna', 'description' => 'Laguna warehouse'],
-            ['site_code' => 'CEB', 'site_name' => 'FAST Cebu', 'description' => 'Cebu warehouse'],
-            ['site_code' => 'CLK', 'site_name' => 'FAST Clark', 'description' => 'Clark warehouse'],
-            ['site_code' => 'DVO', 'site_name' => 'FAST Davao', 'description' => 'Davao warehouse'],
-        ];
+        $districtIds = District::query()->pluck('id', 'district_code');
+        $regionIds = Region::query()->pluck('id', 'region_code');
 
-        foreach ($sites as $site) {
+        foreach ($rows as $row) {
+            $districtId = $districtIds[$row['district_code']] ?? null;
+
+            if (! $districtId) {
+                throw new \RuntimeException("Site {$row['site_code']} references missing district code {$row['district_code']}.");
+            }
+
+            $regionId = null;
+            if (! empty($row['region_code'])) {
+                $regionId = $regionIds[$row['region_code']] ?? null;
+                if (! $regionId) {
+                    throw new \RuntimeException("Site {$row['site_code']} references missing region code {$row['region_code']}.");
+                }
+            }
+
             Site::query()->updateOrCreate(
-                ['site_code' => $site['site_code']],
-                array_merge($site, [
-                    'district_id' => $district?->id,
-                    'status' => RecordStatus::Active->value,
-                ]),
+                ['site_code' => $row['site_code']],
+                [
+                    'site_name' => $row['site_name'],
+                    'district_id' => $districtId,
+                    'region_id' => $regionId,
+                    'description' => $row['description'],
+                    'status' => $row['status'] ?? RecordStatus::Active->value,
+                ],
             );
         }
     }

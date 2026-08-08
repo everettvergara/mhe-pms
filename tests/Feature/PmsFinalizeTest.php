@@ -19,10 +19,12 @@ use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesMheInventoryForPms;
 use Tests\TestCase;
 
 class PmsFinalizeTest extends TestCase
 {
+    use CreatesMheInventoryForPms;
     use RefreshDatabase;
 
     protected Supplier $supplier;
@@ -62,6 +64,8 @@ class PmsFinalizeTest extends TestCase
             'supplier_id' => $this->supplier->id,
         ]);
         $this->supplierUser->sites()->attach($this->site->id);
+
+        $this->createInventoryForPms($this->site, $this->supplier, $this->mheType);
     }
 
     public function test_cannot_save_as_final_when_no_good_has_no_remarks(): void
@@ -158,7 +162,6 @@ class PmsFinalizeTest extends TestCase
             'next_schedule_date' => $pms->next_schedule_date->format('Y-m-d'),
             'mhe_type_id' => $pms->mhe_type_id,
             'unit_number' => $pms->unit_number,
-            'serial_number' => $pms->serial_number,
             'save_as' => 'final',
             'details' => $details,
         ];
@@ -189,7 +192,6 @@ class PmsFinalizeTest extends TestCase
             'next_schedule_date' => now()->addMonth(),
             'mhe_type_id' => $this->mheType->id,
             'unit_number' => 'U-001',
-            'serial_number' => 'S-001',
             'status' => PmsStatus::Draft,
             'created_by' => $this->supplierUser->id,
             'updated_by' => $this->supplierUser->id,

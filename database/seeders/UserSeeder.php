@@ -42,9 +42,9 @@ class UserSeeder extends Seeder
         }
 
         $assignments = [
-            'toyota' => ['supplier' => 'TOY', 'sites' => ['MNL', 'LAG']],
-            'global' => ['supplier' => 'GBL', 'sites' => ['CEB']],
-            'boeing' => ['supplier' => 'BOE', 'sites' => ['CLK', 'DVO']],
+            'toyota' => ['supplier' => 'TOY', 'sites' => ['SDC', 'D&L Pasig']],
+            'global' => ['supplier' => 'GBL', 'sites' => ['DMPICGY']],
+            'boeing' => ['supplier' => 'BOE', 'sites' => ['Alabang', 'PepSi']],
         ];
 
         foreach ($assignments as $username => $data) {

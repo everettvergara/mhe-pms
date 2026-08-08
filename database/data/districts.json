@@ -1,0 +1,122 @@
+[
+  {
+    "district_code": "District 1",
+    "district_name": "District 1",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 2A",
+    "district_name": "District 2A",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 2b",
+    "district_name": "District 2b",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 3",
+    "district_name": "District 3",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 4",
+    "district_name": "District 4",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 5",
+    "district_name": "District 5",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 6",
+    "district_name": "District 6",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "FTMC",
+    "district_name": "FTMC",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "FCCSI",
+    "district_name": "FCCSI",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "MAIN Office",
+    "district_name": "MAIN Office",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "DEFAULT",
+    "district_name": "DEFAULT",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 7",
+    "district_name": "District 7",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "District 2 (ESG)",
+    "district_name": "District 2 (ESG)",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "Head Office (ESG)",
+    "district_name": "Head Office (ESG)",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "South 1 (ESG)",
+    "district_name": "South 1 (ESG)",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "South 2 (ESG)",
+    "district_name": "South 2 (ESG)",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "Seafreight (ESG)",
+    "district_name": "Seafreight (ESG)",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "North (ESG)",
+    "district_name": "North (ESG)",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "Visayas (ESG)",
+    "district_name": "Visayas (ESG)",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "district_code": "Mindanao (ESG)",
+    "district_name": "Mindanao (ESG)",
+    "description": null,
+    "status": "Active"
+  }
+]

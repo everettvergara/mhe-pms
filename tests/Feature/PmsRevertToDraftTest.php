@@ -19,10 +19,12 @@ use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesMheInventoryForPms;
 use Tests\TestCase;
 
 class PmsRevertToDraftTest extends TestCase
 {
+    use CreatesMheInventoryForPms;
     use RefreshDatabase;
 
     protected Supplier $supplier;
@@ -62,6 +64,8 @@ class PmsRevertToDraftTest extends TestCase
             'supplier_id' => $this->supplier->id,
         ]);
         $this->supplierUser->sites()->attach($this->site->id);
+
+        $this->createInventoryForPms($this->site, $this->supplier, $this->mheType);
     }
 
     public function test_supplier_can_revert_no_findings_pms_to_draft(): void
@@ -177,7 +181,6 @@ class PmsRevertToDraftTest extends TestCase
             'next_schedule_date' => now()->addMonth(),
             'mhe_type_id' => $this->mheType->id,
             'unit_number' => 'U-001',
-            'serial_number' => 'S-001',
             'status' => $status,
             'submitted_by' => in_array($status, [PmsStatus::WithFindings, PmsStatus::NoFindings], true)
                 ? ($userId ?? $this->supplierUser->id)

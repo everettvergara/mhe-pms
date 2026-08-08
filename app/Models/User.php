@@ -139,9 +139,11 @@ class User extends Authenticatable
 
     public function profilePictureUrl(): ?string
     {
-        return $this->profile_picture
-            ? Storage::disk('public')->url($this->profile_picture)
-            : null;
+        if (! $this->profile_picture || ! Storage::disk('public')->exists($this->profile_picture)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->profile_picture);
     }
 
     public function sendPasswordResetNotification($token): void

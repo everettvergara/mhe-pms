@@ -65,7 +65,7 @@ class ActionPlanConfirmationPmsStatusTest extends TestCase
         ]);
         $this->supplierUser->sites()->attach($this->site->id);
 
-        $this->adminUser = User::factory()->create();
+        $this->adminUser = User::factory()->superAdmin()->create();
     }
 
     public function test_waiting_confirmation_on_draft_pms_is_not_listed(): void
@@ -173,7 +173,6 @@ class ActionPlanConfirmationPmsStatusTest extends TestCase
             'next_schedule_date' => now()->addMonth(),
             'mhe_type_id' => $this->mheType->id,
             'unit_number' => 'U-001',
-            'serial_number' => 'S-001',
             'status' => $pmsStatus,
             'submitted_by' => in_array($pmsStatus, [PmsStatus::WithFindings, PmsStatus::NoFindings], true)
                 ? $this->supplierUser->id

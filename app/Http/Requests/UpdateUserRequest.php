@@ -3,13 +3,15 @@
 namespace App\Http\Requests;
 
 use App\Enums\UserStatus;
-use App\Models\Role;
+use App\Http\Requests\Concerns\ValidatesUserAssignments;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class UpdateUserRequest extends FormRequest
 {
+    use ValidatesUserAssignments;
+
     public function authorize(): bool
     {
         return true;
@@ -27,10 +29,7 @@ class UpdateUserRequest extends FormRequest
      */
     public function rules(): array
     {
-        $supplierRoleId = Role::query()->where('slug', Role::SLUG_SUPPLIER_USER)->value('id');
         $user = $this->route('user');
-        $isSuperAdmin = $this->boolean('is_super_admin');
-        $isSupplierRole = (int) $this->input('role_id') === (int) $supplierRoleId;
 
         return [
             'username' => [
@@ -50,8 +49,8 @@ class UpdateUserRequest extends FormRequest
             'role_id' => ['required', 'exists:roles,id'],
             'is_super_admin' => ['boolean'],
             'supplier_ids' => [
-                Rule::prohibitedIf($isSuperAdmin),
-                Rule::requiredIf(fn () => $isSupplierRole && ! $isSuperAdmin),
+                Rule::prohibitedIf($this->isSuperAdminInput()),
+                Rule::requiredIf(fn () => $this->requiresSupplierAssignment()),
                 'nullable',
                 'array',
                 'min:1',
@@ -60,8 +59,8 @@ class UpdateUserRequest extends FormRequest
             'status' => ['required', Rule::enum(UserStatus::class)],
             'password' => ['nullable', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()],
             'site_ids' => [
-                Rule::prohibitedIf($isSuperAdmin),
-                Rule::requiredIf(fn () => $isSupplierRole && ! $isSuperAdmin),
+                Rule::prohibitedIf($this->isSuperAdminInput()),
+                Rule::requiredIf(fn () => $this->requiresSiteAssignment()),
                 'nullable',
                 'array',
                 'min:1',

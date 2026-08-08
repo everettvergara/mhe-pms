@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Login') — {{ config('app.name', 'MHE - Preventive Maintenance System') }}</title>
+    @include('partials.favicon')
     @if (config('recaptcha.site_key'))
         <meta name="recaptcha-site-key" content="{{ config('recaptcha.site_key') }}">
         <script src="https://www.google.com/recaptcha/api.js?render={{ config('recaptcha.site_key') }}" async defer></script>

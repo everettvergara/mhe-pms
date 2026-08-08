@@ -219,4 +219,33 @@ class ProfileTest extends TestCase
         Storage::disk('public')->assertExists($user->profile_picture);
         $this->assertNotSame($oldPath, $user->profile_picture);
     }
+
+    public function test_profile_picture_url_returns_null_when_file_is_missing(): void
+    {
+        $user = User::factory()->create();
+        $user->update(['profile_picture' => 'profile-pictures/'.$user->id.'/missing.jpg']);
+
+        $this->assertNull($user->profilePictureUrl());
+    }
+
+    public function test_super_admin_sees_import_shortcut_on_profile(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertSee('Run FSC Web Import')
+            ->assertSee(route('mhe-downtimes.import.create'), false);
+    }
+
+    public function test_non_super_admin_does_not_see_import_shortcut_on_profile(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/profile')
+            ->assertOk()
+            ->assertDontSee('Run FSC Web Import');
+    }
 }

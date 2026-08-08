@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Attachment;
+use App\Models\MheDowntime;
+use App\Models\MheDowntimeActionPlan;
 use App\Models\PmsDetail;
 use App\Models\PmsHeader;
 use App\Models\User;
@@ -30,15 +32,7 @@ class AttachmentService
      */
     public function storeMany(Model $attachable, User $user, array $files): Collection
     {
-        $pmsHeader = $this->resolvePmsHeader($attachable);
-
-        if ($pmsHeader === null) {
-            throw new InvalidArgumentException('Unsupported attachable type.');
-        }
-
-        if (! $pmsHeader->isDraft()) {
-            throw new RuntimeException('Attachments can only be added to draft PMS records.');
-        }
+        $this->assertCanManageAttachments($attachable);
 
         $files = array_values(array_filter($files, fn ($file) => $file instanceof UploadedFile));
 
@@ -46,11 +40,11 @@ class AttachmentService
             throw new InvalidArgumentException('At least one file is required.');
         }
 
-        $maxPerRecord = (int) config('pms.attachments.max_per_record', 10);
+        $maxPerRecord = $this->maxPerRecord($attachable);
         $existingCount = $attachable->attachments()->count();
 
         if ($existingCount + count($files) > $maxPerRecord) {
-            throw new InvalidArgumentException("A maximum of {$maxPerRecord} photos is allowed per record.");
+            throw new InvalidArgumentException("A maximum of {$maxPerRecord} files is allowed per record.");
         }
 
         $storageDirectory = $this->storageDirectory($attachable);
@@ -76,15 +70,13 @@ class AttachmentService
 
     public function destroy(Attachment $attachment, User $user): void
     {
-        $pmsHeader = $attachment->resolvePmsHeader();
+        $attachable = $attachment->attachable;
 
-        if ($pmsHeader === null) {
+        if ($attachable === null) {
             throw new InvalidArgumentException('Unsupported attachment.');
         }
 
-        if (! $pmsHeader->isDraft()) {
-            throw new RuntimeException('Attachments can only be removed from draft PMS records.');
-        }
+        $this->assertCanManageAttachments($attachable);
 
         DB::transaction(function () use ($attachment): void {
             $this->deleteFile($attachment);
@@ -92,17 +84,28 @@ class AttachmentService
         });
     }
 
-    protected function resolvePmsHeader(Model $attachable): ?PmsHeader
+    protected function assertCanManageAttachments(Model $attachable): void
     {
-        if ($attachable instanceof PmsHeader) {
-            return $attachable;
+        if ($attachable instanceof PmsHeader && ! $attachable->isDraft()) {
+            throw new RuntimeException('Attachments can only be added to draft PMS records.');
         }
 
-        if ($attachable instanceof PmsDetail) {
-            return $attachable->pmsHeader;
+        if ($attachable instanceof PmsDetail && ! $attachable->pmsHeader->isDraft()) {
+            throw new RuntimeException('Attachments can only be added to draft PMS records.');
         }
 
-        return null;
+        if ($attachable instanceof MheDowntime && ! $attachable->isDraft()) {
+            throw new RuntimeException('Attachments can only be added to draft downtime records.');
+        }
+    }
+
+    protected function maxPerRecord(Model $attachable): int
+    {
+        if ($attachable instanceof MheDowntime || $attachable instanceof MheDowntimeActionPlan) {
+            return (int) config('mhe_downtime.attachments.max_per_record', 10);
+        }
+
+        return (int) config('pms.attachments.max_per_record', 10);
     }
 
     protected function storageDirectory(Model $attachable): string
@@ -113,6 +116,14 @@ class AttachmentService
 
         if ($attachable instanceof PmsDetail) {
             return 'pms-detail-attachments/'.$attachable->id;
+        }
+
+        if ($attachable instanceof MheDowntime) {
+            return 'mhe-downtime-attachments/'.$attachable->id;
+        }
+
+        if ($attachable instanceof MheDowntimeActionPlan) {
+            return 'mhe-downtime-action-plan-attachments/'.$attachable->id;
         }
 
         throw new InvalidArgumentException('Unsupported attachable type.');

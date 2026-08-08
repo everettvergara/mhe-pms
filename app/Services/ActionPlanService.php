@@ -21,6 +21,7 @@ class ActionPlanService
         protected ActivityLogService $activityLogService,
         protected PmsActionPlanStatusSyncService $pmsActionPlanStatusSyncService,
         protected UserDataScopeService $userDataScopeService,
+        protected PmsNotificationService $pmsNotificationService,
     ) {}
 
     /**
@@ -62,6 +63,8 @@ class ActionPlanService
                 $actionPlan->id,
                 "Created action plan {$actionPlan->action_plan_no}.",
             );
+
+            $this->pmsNotificationService->notifyActionPlanCreated($actionPlan);
 
             return $actionPlan->refresh()->load(['pmsDetail.pmsHeader', 'comments.creator']);
         });
@@ -176,6 +179,8 @@ class ActionPlanService
                 "Marked action plan {$actionPlan->action_plan_no} as implemented.",
             );
 
+            $this->pmsNotificationService->notifyActionPlanImplemented($actionPlan);
+
             return $actionPlan->refresh()->load(['pmsDetail.pmsHeader', 'comments.creator']);
         });
     }
@@ -213,6 +218,8 @@ class ActionPlanService
                 $actionPlan->id,
                 "Confirmed action plan {$actionPlan->action_plan_no}.",
             );
+
+            $this->pmsNotificationService->notifyActionPlanConfirmed($actionPlan);
 
             return $actionPlan->refresh()->load(['pmsDetail.pmsHeader', 'comments.creator']);
         });
@@ -256,6 +263,8 @@ class ActionPlanService
                 $actionPlan->id,
                 "Rejected action plan {$actionPlan->action_plan_no}.",
             );
+
+            $this->pmsNotificationService->notifyActionPlanRejected($actionPlan, $rejectionRemarks);
 
             return $actionPlan->refresh()->load(['pmsDetail.pmsHeader', 'comments.creator']);
         });

@@ -8,8 +8,13 @@ use App\Models\Attachment;
 use App\Models\ChecklistGroup;
 use App\Models\ChecklistItem;
 use App\Models\District;
+use App\Models\MheCategory;
+use App\Models\MheDowntime;
+use App\Models\MheDowntimeActionPlan;
+use App\Models\MheInventory;
 use App\Models\MheType;
 use App\Models\PmsHeader;
+use App\Models\Region;
 use App\Models\Role;
 use App\Models\Site;
 use App\Models\Supplier;
@@ -20,12 +25,18 @@ use App\Policies\AttachmentPolicy;
 use App\Policies\ChecklistGroupPolicy;
 use App\Policies\ChecklistItemPolicy;
 use App\Policies\DistrictPolicy;
+use App\Policies\MheCategoryPolicy;
+use App\Policies\MheDowntimeActionPlanPolicy;
+use App\Policies\MheDowntimePolicy;
+use App\Policies\MheInventoryPolicy;
 use App\Policies\MheTypePolicy;
 use App\Policies\PmsPolicy;
+use App\Policies\RegionPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\SitePolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\UserPolicy;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -36,8 +47,13 @@ class AppServiceProvider extends ServiceProvider
     protected $policies = [
         Supplier::class => SupplierPolicy::class,
         District::class => DistrictPolicy::class,
+        Region::class => RegionPolicy::class,
         Site::class => SitePolicy::class,
         MheType::class => MheTypePolicy::class,
+        MheCategory::class => MheCategoryPolicy::class,
+        MheInventory::class => MheInventoryPolicy::class,
+        MheDowntime::class => MheDowntimePolicy::class,
+        MheDowntimeActionPlan::class => MheDowntimeActionPlanPolicy::class,
         ChecklistGroup::class => ChecklistGroupPolicy::class,
         ChecklistItem::class => ChecklistItemPolicy::class,
         User::class => UserPolicy::class,
@@ -55,6 +71,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Paginator::useBootstrapFive();
+        Paginator::defaultView('vendor.pagination.bootstrap-5');
+
         Password::defaults(function () {
             return Password::min(8)
                 ->mixedCase()

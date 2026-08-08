@@ -15,9 +15,16 @@
     <div {{ $attributes->merge(['class' => $gridClass]) }}>
         @foreach($attachments as $attachment)
             <div @class(['attachment-item', 'attachment-item-inline' => $inline && $canDelete])>
-                <a href="{{ $attachment->url() }}" target="_blank" rel="noopener" title="{{ $attachment->original_filename }}" @class(['attachment-thumb-link' => $inline && $canDelete])>
-                    <img src="{{ $attachment->url() }}" alt="{{ $attachment->original_filename }}" class="{{ $thumbClass }}">
-                </a>
+                @if($attachment->isAvailable())
+                    <a href="{{ $attachment->url() }}" target="_blank" rel="noopener" title="{{ $attachment->original_filename }}" @class(['attachment-thumb-link' => $inline && $canDelete])>
+                        <img src="{{ $attachment->url() }}" alt="{{ $attachment->original_filename }}" class="{{ $thumbClass }}">
+                    </a>
+                @else
+                    <div class="attachment-placeholder-thumb {{ $thumbClass }}" title="{{ $attachment->original_filename }} — file unavailable">
+                        <i class="bi bi-file-earmark-x" aria-hidden="true"></i>
+                        <span class="attachment-placeholder-label">Unavailable</span>
+                    </div>
+                @endif
                 @if($canDelete)
                     @if($externalDeleteForms)
                         <button

@@ -15,6 +15,7 @@ class Site extends Model
 
     protected $fillable = [
         'district_id',
+        'region_id',
         'site_code',
         'site_name',
         'description',
@@ -35,6 +36,11 @@ class Site extends Model
         return $this->belongsTo(District::class);
     }
 
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
+    }
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'supplier_sites');
@@ -43,5 +49,10 @@ class Site extends Model
     public function pmsHeaders(): HasMany
     {
         return $this->hasMany(PmsHeader::class);
+    }
+
+    public function mheInventories(): HasMany
+    {
+        return $this->hasMany(MheInventory::class);
     }
 }

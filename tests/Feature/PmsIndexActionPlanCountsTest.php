@@ -58,7 +58,7 @@ class PmsIndexActionPlanCountsTest extends TestCase
             'status' => RecordStatus::Active,
         ]);
 
-        $this->adminUser = User::factory()->create();
+        $this->adminUser = User::factory()->superAdmin()->create();
     }
 
     public function test_pms_index_shows_date_range_and_created_metadata(): void
@@ -133,7 +133,6 @@ class PmsIndexActionPlanCountsTest extends TestCase
             'next_schedule_date' => now()->addMonth(),
             'mhe_type_id' => $this->mheType->id,
             'unit_number' => 'U-001',
-            'serial_number' => 'S-001',
             'status' => PmsStatus::WithFindings,
             'submitted_by' => $this->adminUser->id,
             'submitted_at' => now(),

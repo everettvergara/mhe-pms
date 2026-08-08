@@ -1,0 +1,27 @@
+[
+  {
+    "code": "CB",
+    "description": "Counter Balance",
+    "status": "Active"
+  },
+  {
+    "code": "RT",
+    "description": "Reach Truck",
+    "status": "Active"
+  },
+  {
+    "code": "LT",
+    "description": "Long Transporter",
+    "status": "Active"
+  },
+  {
+    "code": "ST",
+    "description": "Short Transporter",
+    "status": "Active"
+  },
+  {
+    "code": "JL",
+    "description": "Jack Lift",
+    "status": "Active"
+  }
+]

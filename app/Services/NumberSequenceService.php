@@ -9,13 +9,14 @@ use InvalidArgumentException;
 class NumberSequenceService
 {
     /**
-     * @param  'pms'|'action_plan'  $type
+     * @param  'pms'|'action_plan'|'downtime_action_plan'  $type
      */
     public function nextNumber(string $type): string
     {
         $prefix = match ($type) {
             'pms' => 'PMS',
             'action_plan' => 'AP',
+            'downtime_action_plan' => 'DT-AP',
             default => throw new InvalidArgumentException("Invalid sequence type: {$type}"),
         };
 

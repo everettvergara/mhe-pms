@@ -14,6 +14,7 @@ use App\Models\MheType;
 use App\Models\PmsHeader;
 use App\Models\Site;
 use App\Models\Supplier;
+use App\Services\MheInventoryLookupService;
 use App\Services\PmsService;
 use App\Services\UserDataScopeService;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +30,7 @@ class PmsController extends Controller
     public function __construct(
         protected PmsService $pmsService,
         protected UserDataScopeService $userDataScopeService,
+        protected MheInventoryLookupService $mheInventoryLookupService,
     ) {
         $this->authorizeResource(PmsHeader::class, 'pms');
     }
@@ -158,6 +160,51 @@ class PmsController extends Controller
         }
 
         return redirect()->route('pms.show', $pms)->with('success', 'PMS reverted to draft successfully.');
+    }
+
+    public function searchSites(Request $request): JsonResponse
+    {
+        $this->authorize('create', PmsHeader::class);
+
+        return response()->json(
+            $this->mheInventoryLookupService->searchSites($request->user(), $request->query('q'))
+        );
+    }
+
+    public function lookupSite(Request $request): JsonResponse
+    {
+        $this->authorize('create', PmsHeader::class);
+
+        return response()->json(
+            $this->mheInventoryLookupService->lookupSite($request->user(), (string) $request->query('q', ''))
+        );
+    }
+
+    public function searchUnits(Request $request): JsonResponse
+    {
+        $this->authorize('create', PmsHeader::class);
+
+        return response()->json(
+            $this->mheInventoryLookupService->searchUnits(
+                $request->user(),
+                (int) $request->query('site_id'),
+                $request->query('mhe_type_id') ? (int) $request->query('mhe_type_id') : null,
+                $request->query('q'),
+            )
+        );
+    }
+
+    public function lookupUnit(Request $request): JsonResponse
+    {
+        $this->authorize('create', PmsHeader::class);
+
+        return response()->json(
+            $this->mheInventoryLookupService->lookupUnit(
+                $request->user(),
+                (int) $request->query('site_id'),
+                (string) $request->query('unit_number', $request->query('ref_unit_no', '')),
+            )
+        );
     }
 
     /**

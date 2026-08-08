@@ -37,6 +37,9 @@ class RoleSeeder extends Seeder
             'pms.manage',
             'action-plans.view',
             'action-plans.manage',
+            'mhe-downtimes.view',
+            'mhe-downtimes.manage',
+            'mhe-downtimes.post',
             'reports.view',
             'profile.manage',
         ];

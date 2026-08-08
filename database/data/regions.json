@@ -1,0 +1,20 @@
+[
+  {
+    "region_code": "Luzon",
+    "region_name": "Luzon",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "region_code": "Vizayas",
+    "region_name": "Vizayas",
+    "description": null,
+    "status": "Active"
+  },
+  {
+    "region_code": "Mindanao",
+    "region_name": "Mindanao",
+    "description": null,
+    "status": "Active"
+  }
+]

@@ -17,10 +17,12 @@ use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesMheInventoryForPms;
 use Tests\TestCase;
 
 class PmsActionPlanModalTest extends TestCase
 {
+    use CreatesMheInventoryForPms;
     use RefreshDatabase;
 
     protected User $supplierUser;
@@ -72,6 +74,8 @@ class PmsActionPlanModalTest extends TestCase
         ]);
         $this->supplierUser->sites()->attach($site->id);
 
+        $this->createInventoryForPms($site, $supplier, $mheType);
+
         $this->pms = PmsHeader::query()->create([
             'pms_no' => 'PMS-TEST-001',
             'supplier_id' => $supplier->id,
@@ -82,7 +86,6 @@ class PmsActionPlanModalTest extends TestCase
             'next_schedule_date' => now()->addMonth(),
             'mhe_type_id' => $mheType->id,
             'unit_number' => 'U-001',
-            'serial_number' => 'S-001',
             'status' => PmsStatus::Draft,
             'created_by' => $this->supplierUser->id,
             'updated_by' => $this->supplierUser->id,
@@ -106,7 +109,6 @@ class PmsActionPlanModalTest extends TestCase
             'next_schedule_date' => $this->pms->next_schedule_date->format('Y-m-d'),
             'mhe_type_id' => $this->pms->mhe_type_id,
             'unit_number' => $this->pms->unit_number,
-            'serial_number' => $this->pms->serial_number,
             'save_as' => 'draft',
             'details' => [
                 [
@@ -135,7 +137,6 @@ class PmsActionPlanModalTest extends TestCase
             'next_schedule_date' => $this->pms->next_schedule_date->format('Y-m-d'),
             'mhe_type_id' => $this->pms->mhe_type_id,
             'unit_number' => $this->pms->unit_number,
-            'serial_number' => $this->pms->serial_number,
             'save_as' => 'draft',
             'details' => [
                 [
@@ -164,7 +165,6 @@ class PmsActionPlanModalTest extends TestCase
             'next_schedule_date' => $this->pms->next_schedule_date->format('Y-m-d'),
             'mhe_type_id' => $this->pms->mhe_type_id,
             'unit_number' => $this->pms->unit_number,
-            'serial_number' => $this->pms->serial_number,
             'save_as' => 'draft',
             'details' => [
                 [

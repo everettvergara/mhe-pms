@@ -3,11 +3,14 @@
 namespace App\Http\Requests;
 
 use App\Enums\ChecklistAnswer;
+use App\Http\Requests\Concerns\ValidatesPmsInventoryUnit;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StorePmsRequest extends FormRequest
 {
+    use ValidatesPmsInventoryUnit;
+
     public function authorize(): bool
     {
         return true;
@@ -35,7 +38,6 @@ class StorePmsRequest extends FormRequest
             'date_to' => ['required', 'date', 'after_or_equal:date_from'],
             'mhe_type_id' => ['required', 'exists:mhe_types,id'],
             'unit_number' => ['required', 'string', 'max:100'],
-            'serial_number' => ['required', 'string', 'max:100'],
             'next_schedule_date' => ['required', 'date', 'after_or_equal:today'],
         ];
     }

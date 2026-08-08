@@ -528,6 +528,65 @@ Tables shall scroll horizontally when necessary.
 
 ------------------------------------------------------------------------
 
+# Transaction Photo Attachments
+
+PMS and MHE Downtime use the **same photo attachment pattern**. Do not
+introduce alternate UIs (file lists, generic file inputs, or different
+field names) for these modules.
+
+## Shared UI component
+
+Use `<x-transaction-photos>` (`resources/views/components/transaction-photos.blade.php`).
+
+It renders:
+
+-   Section title **Transaction Photos**
+-   Thumbnail grid via `<x-attachment-thumbnails>`
+-   Count badge (`current / max`)
+-   **Add Photos** button with camera icon (`bi-camera`)
+-   Hidden file input accepting **images only**: jpg, jpeg, png, webp
+
+Module partials shall wrap this component (see
+`pms/partials/pms-header-attachments.blade.php` and
+`mhe-downtimes/partials/attachments.blade.php`).
+
+## Upload behaviour
+
+| Context | Where photos live | Submit mechanism |
+|---------|-------------------|------------------|
+| PMS edit | Outside the save form | Separate POST; auto-submit on file pick |
+| MHE Downtime create | Inside the save form | Submitted with **Save** via `FormData` fetch (see below) |
+| MHE Downtime edit | Outside the save form | Separate POST; auto-submit on file pick |
+
+The downtime save form uses async site validation before submit. **Do not**
+use `requestSubmit()` after `preventDefault()` when file inputs are present —
+browsers drop selected files. Submit with `fetch` + `FormData` instead (see
+`mhe-downtimes/partials/header-form.blade.php`).
+
+## Request field name
+
+Always use **`files[]`** — never `attachments[]`.
+
+## Validation
+
+Use `ValidatesPhotoAttachments` trait
+(`app/Http/Requests/Concerns/ValidatesPhotoAttachments.php`).
+
+| Module | Config key |
+|--------|------------|
+| PMS | `pms.attachments` |
+| MHE Downtime | `mhe_downtime.attachments` |
+
+Both configs expose `allowed_mimes`, `max_per_record`, and
+`max_file_size_kb`.
+
+## Read-only display
+
+Show existing photos with `<x-attachment-thumbnails>` (not
+`<x-attachment-file>` text links).
+
+------------------------------------------------------------------------
+
 # Accessibility
 
 Use sufficient color contrast.

@@ -7,7 +7,17 @@ use App\Http\Controllers\ChecklistGroupController;
 use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MheCategoryController;
+use App\Http\Controllers\MheDowntimeActionPlanConfirmationController;
+use App\Http\Controllers\MheDowntimeActionPlanController;
+use App\Http\Controllers\MheDowntimeAttachmentController;
+use App\Http\Controllers\MheDowntimeImportController;
+use App\Http\Controllers\MheDowntimeController;
+use App\Http\Controllers\MheDowntimeReportController;
+use App\Http\Controllers\MheUptimeDashboardController;
+use App\Http\Controllers\MheInventoryController;
 use App\Http\Controllers\MheTypeController;
+use App\Http\Controllers\RegionController;
 use App\Http\Controllers\PmsAttachmentController;
 use App\Http\Controllers\PmsController;
 use App\Http\Controllers\ProfileController;
@@ -30,11 +40,19 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->middleware('permission:dashboard.view')
         ->name('dashboard.pms-schedule');
 
+    Route::get('/dashboard/mhe-uptime', [MheUptimeDashboardController::class, 'index'])
+        ->middleware('permission:mhe-downtimes.view')
+        ->name('dashboard.mhe-uptime');
+
     Route::middleware('permission:pms.view')->group(function (): void {
         Route::get('pms', [PmsController::class, 'index'])->name('pms.index');
     });
 
     Route::middleware('permission:pms.manage')->group(function (): void {
+        Route::get('pms/search-sites', [PmsController::class, 'searchSites'])->name('pms.search-sites');
+        Route::get('pms/lookup-site', [PmsController::class, 'lookupSite'])->name('pms.lookup-site');
+        Route::get('pms/search-units', [PmsController::class, 'searchUnits'])->name('pms.search-units');
+        Route::get('pms/lookup-unit', [PmsController::class, 'lookupUnit'])->name('pms.lookup-unit');
         Route::get('pms/create', [PmsController::class, 'create'])->name('pms.create');
         Route::post('pms', [PmsController::class, 'store'])->name('pms.store');
         Route::get('pms/{pms}/edit', [PmsController::class, 'edit'])->name('pms.edit');
@@ -64,6 +82,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::middleware('permission:action-plans.view')->group(function (): void {
         Route::get('action-plans', [ActionPlanController::class, 'index'])->name('action-plans.index');
         Route::get('action-plans/{action_plan}', [ActionPlanController::class, 'show'])->name('action-plans.show');
+    });
+
+    Route::middleware('permission:action-plans.confirm')->prefix('mhe-downtime-action-plan-confirmations')->name('mhe-downtime-action-plan-confirmations.')->group(function (): void {
+        Route::get('/', [MheDowntimeActionPlanConfirmationController::class, 'index'])->name('index');
+        Route::get('/{actionPlan}', [MheDowntimeActionPlanConfirmationController::class, 'show'])->name('show');
+        Route::post('/{actionPlan}/confirm', [MheDowntimeActionPlanConfirmationController::class, 'confirm'])->name('confirm');
+        Route::post('/{actionPlan}/reject', [MheDowntimeActionPlanConfirmationController::class, 'reject'])->name('reject');
     });
 
     Route::middleware('permission:action-plans.confirm')->prefix('action-plan-confirmations')->name('action-plan-confirmations.')->group(function (): void {
@@ -97,6 +122,18 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('districts/{district}', [DistrictController::class, 'show'])->name('districts.show');
     });
 
+    Route::middleware('permission:regions.manage')->group(function (): void {
+        Route::get('regions/create', [RegionController::class, 'create'])->name('regions.create');
+        Route::post('regions', [RegionController::class, 'store'])->name('regions.store');
+        Route::get('regions/{region}/edit', [RegionController::class, 'edit'])->name('regions.edit');
+        Route::put('regions/{region}', [RegionController::class, 'update'])->name('regions.update');
+        Route::delete('regions/{region}', [RegionController::class, 'destroy'])->name('regions.destroy');
+    });
+    Route::middleware('permission:regions.view')->group(function (): void {
+        Route::get('regions', [RegionController::class, 'index'])->name('regions.index');
+        Route::get('regions/{region}', [RegionController::class, 'show'])->name('regions.show');
+    });
+
     Route::middleware('permission:sites.manage')->group(function (): void {
         Route::get('sites/create', [SiteController::class, 'create'])->name('sites.create');
         Route::post('sites', [SiteController::class, 'store'])->name('sites.store');
@@ -119,6 +156,75 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::middleware('permission:mhe-types.view')->group(function (): void {
         Route::get('mhe-types', [MheTypeController::class, 'index'])->name('mhe-types.index');
         Route::get('mhe-types/{mhe_type}', [MheTypeController::class, 'show'])->name('mhe-types.show');
+    });
+
+    Route::middleware('permission:mhe-inventories.manage')->group(function (): void {
+        Route::get('mhe-inventories/create', [MheInventoryController::class, 'create'])->name('mhe-inventories.create');
+        Route::post('mhe-inventories', [MheInventoryController::class, 'store'])->name('mhe-inventories.store');
+        Route::get('mhe-inventories/{mhe_inventory}/edit', [MheInventoryController::class, 'edit'])->name('mhe-inventories.edit');
+        Route::put('mhe-inventories/{mhe_inventory}', [MheInventoryController::class, 'update'])->name('mhe-inventories.update');
+        Route::delete('mhe-inventories/{mhe_inventory}', [MheInventoryController::class, 'destroy'])->name('mhe-inventories.destroy');
+    });
+    Route::middleware('permission:mhe-inventories.view')->group(function (): void {
+        Route::get('mhe-inventories', [MheInventoryController::class, 'index'])->name('mhe-inventories.index');
+        Route::get('mhe-inventories/{mhe_inventory}', [MheInventoryController::class, 'show'])->name('mhe-inventories.show');
+    });
+
+    Route::middleware('permission:mhe-categories.manage')->group(function (): void {
+        Route::get('mhe-categories/create', [MheCategoryController::class, 'create'])->name('mhe-categories.create');
+        Route::post('mhe-categories', [MheCategoryController::class, 'store'])->name('mhe-categories.store');
+        Route::get('mhe-categories/{mhe_category}/edit', [MheCategoryController::class, 'edit'])->name('mhe-categories.edit');
+        Route::put('mhe-categories/{mhe_category}', [MheCategoryController::class, 'update'])->name('mhe-categories.update');
+        Route::delete('mhe-categories/{mhe_category}', [MheCategoryController::class, 'destroy'])->name('mhe-categories.destroy');
+    });
+    Route::middleware('permission:mhe-categories.view')->group(function (): void {
+        Route::get('mhe-categories', [MheCategoryController::class, 'index'])->name('mhe-categories.index');
+        Route::get('mhe-categories/{mhe_category}', [MheCategoryController::class, 'show'])->name('mhe-categories.show');
+    });
+
+    Route::middleware('permission:mhe-downtimes.view')->group(function (): void {
+        Route::get('mhe-downtimes', [MheDowntimeController::class, 'index'])->name('mhe-downtimes.index');
+        Route::get('mhe-downtimes/search-sites', [MheDowntimeController::class, 'searchSites'])->name('mhe-downtimes.search-sites');
+        Route::get('mhe-downtimes/lookup-site', [MheDowntimeController::class, 'lookupSite'])->name('mhe-downtimes.lookup-site');
+        Route::get('mhe-downtimes/search-units', [MheDowntimeController::class, 'searchUnits'])->name('mhe-downtimes.search-units');
+        Route::get('mhe-downtimes/lookup-unit', [MheDowntimeController::class, 'lookupUnit'])->name('mhe-downtimes.lookup-unit');
+    });
+
+    Route::middleware('permission:mhe-downtimes.view')->prefix('mhes')->name('mhes.')->group(function (): void {
+        Route::get('summary', [MheDowntimeReportController::class, 'summary'])->name('summary');
+        Route::get('summary/action-plans', [MheDowntimeReportController::class, 'summaryActionPlans'])->name('summary.action-plans');
+        Route::get('utilization', [MheDowntimeReportController::class, 'utilization'])->name('utilization');
+    });
+
+    Route::middleware('permission:mhe-downtimes.manage')->group(function (): void {
+        Route::get('mhe-downtimes/create', [MheDowntimeController::class, 'create'])->name('mhe-downtimes.create');
+        Route::post('mhe-downtimes', [MheDowntimeController::class, 'store'])->name('mhe-downtimes.store');
+        Route::get('mhe-downtimes/{mhe_downtime}/edit', [MheDowntimeController::class, 'edit'])->name('mhe-downtimes.edit');
+        Route::put('mhe-downtimes/{mhe_downtime}', [MheDowntimeController::class, 'update'])->name('mhe-downtimes.update');
+        Route::delete('mhe-downtimes/{mhe_downtime}', [MheDowntimeController::class, 'destroy'])->name('mhe-downtimes.destroy');
+        Route::post('mhe-downtimes/{mhe_downtime}/cancel', [MheDowntimeController::class, 'cancel'])->name('mhe-downtimes.cancel');
+        Route::post('mhe-downtimes/{mhe_downtime}/revert-to-draft', [MheDowntimeController::class, 'revertToDraft'])->name('mhe-downtimes.revert-to-draft');
+        Route::post('mhe-downtimes/{mhe_downtime}/attachments', [MheDowntimeAttachmentController::class, 'storeForDowntime'])->name('mhe-downtimes.attachments.store');
+        Route::post('mhe-downtimes/{mhe_downtime}/action-plans', [MheDowntimeActionPlanController::class, 'store'])->name('mhe-downtimes.action-plans.store');
+        Route::put('mhe-downtimes/{mhe_downtime}/action-plans/{action_plan}', [MheDowntimeActionPlanController::class, 'update'])->name('mhe-downtimes.action-plans.update');
+        Route::post('mhe-downtimes/{mhe_downtime}/action-plans/{action_plan}/comment', [MheDowntimeActionPlanController::class, 'comment'])->name('mhe-downtimes.action-plans.comment');
+        Route::post('mhe-downtimes/{mhe_downtime}/action-plans/{action_plan}/mark-implemented', [MheDowntimeActionPlanController::class, 'markImplemented'])->name('mhe-downtimes.action-plans.mark-implemented');
+        Route::post('mhe-downtimes/{mhe_downtime}/action-plans/{action_plan}/cancel', [MheDowntimeActionPlanController::class, 'cancel'])->name('mhe-downtimes.action-plans.cancel');
+        Route::delete('mhe-downtimes/{mhe_downtime}/action-plans/{action_plan}', [MheDowntimeActionPlanController::class, 'destroy'])->name('mhe-downtimes.action-plans.destroy');
+        Route::post('mhe-downtimes/{mhe_downtime}/action-plans/{action_plan}/attachments', [MheDowntimeAttachmentController::class, 'storeForActionPlan'])->name('mhe-downtimes.action-plans.attachments.store');
+    });
+
+    Route::middleware('permission:mhe-downtimes.import')->group(function (): void {
+        Route::get('mhe-downtimes/import', [MheDowntimeImportController::class, 'index'])->name('mhe-downtimes.import.index');
+        Route::get('mhe-downtimes/import/run', [MheDowntimeImportController::class, 'create'])->name('mhe-downtimes.import.create');
+        Route::post('mhe-downtimes/import', [MheDowntimeImportController::class, 'store'])->name('mhe-downtimes.import.store');
+        Route::get('mhe-downtimes/import/{batchId}/progress', [MheDowntimeImportController::class, 'progress'])->name('mhe-downtimes.import.progress');
+        Route::get('mhe-downtimes/import/{batchId}/status', [MheDowntimeImportController::class, 'status'])->name('mhe-downtimes.import.status');
+        Route::get('mhe-downtimes/import/logs/{batchId}', [MheDowntimeImportController::class, 'downloadLog'])->name('mhe-downtimes.import.log');
+    });
+
+    Route::middleware('permission:mhe-downtimes.view')->group(function (): void {
+        Route::get('mhe-downtimes/{mhe_downtime}', [MheDowntimeController::class, 'show'])->name('mhe-downtimes.show');
     });
 
     Route::middleware('permission:checklist-groups.manage')->group(function (): void {

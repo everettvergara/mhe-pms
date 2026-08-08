@@ -5,29 +5,40 @@
         <thead>
             <tr>
                 <th>Next Schedule</th>
-                <th>PMS No.</th>
+                <th>Unit</th>
+                <th>Last PMS</th>
                 @if($showSupplier)
                     <th>Supplier</th>
                 @endif
                 <th>Site</th>
-                <th>Status</th>
                 <th>Days</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($records as $pms)
+            @forelse($records as $inventory)
                 @php
-                    $daysUntil = now()->startOfDay()->diffInDays($pms->next_schedule_date, false);
+                    $daysUntil = now()->startOfDay()->diffInDays($inventory->next_pms_date, false);
                     $urgencyClass = $daysUntil < 0 ? 'text-danger' : ($daysUntil <= 7 ? 'text-warning' : '');
                 @endphp
-                <tr data-href="{{ route('pms.show', $pms) }}">
-                    <td class="{{ $urgencyClass }} fw-medium">{{ $pms->next_schedule_date?->format('Y-m-d') }}</td>
-                    <td><x-pms-no-cell :pms="$pms" /></td>
+                <tr data-href="{{ route('mhe-inventories.show', $inventory) }}">
+                    <td class="{{ $urgencyClass }} fw-medium">{{ $inventory->next_pms_date?->format('Y-m-d') }}</td>
+                    <td>
+                        <div>{{ $inventory->unit_no ?? '—' }}</div>
+                        <div class="text-muted small">{{ $inventory->mheType?->code ?? '—' }}</div>
+                    </td>
+                    <td>
+                        @if($inventory->lastPmsHeader)
+                            <a href="{{ route('pms.show', $inventory->lastPmsHeader) }}" onclick="event.stopPropagation()">
+                                {{ $inventory->lastPmsHeader->pms_no }}
+                            </a>
+                        @else
+                            —
+                        @endif
+                    </td>
                     @if($showSupplier)
-                        <td><x-supplier-cell :supplier="$pms->supplier" /></td>
+                        <td><x-supplier-cell :supplier="$inventory->supplier" /></td>
                     @endif
-                    <td>{{ $pms->site?->site_name }}</td>
-                    <td><x-status-badge :status="$pms->status" /></td>
+                    <td>{{ $inventory->siteRelation?->site_name ?? $inventory->site ?? '—' }}</td>
                     <td class="{{ $urgencyClass }}">
                         @if($daysUntil < 0)
                             {{ abs($daysUntil) }} day(s) overdue
