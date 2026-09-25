@@ -127,4 +127,16 @@ class MheDowntime extends Model
             ->where('status', DowntimeStatus::Posted)
             ->whereDoesntHave('actionPlans');
     }
+
+    /**
+     * Posted downtime that has not been brought back up.
+     *
+     * @param  Builder<MheDowntime>  $query
+     */
+    public function scopeCurrentlyDown(Builder $query): Builder
+    {
+        return $query
+            ->where('status', DowntimeStatus::Posted)
+            ->whereNull('uptime');
+    }
 }

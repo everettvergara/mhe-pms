@@ -41,7 +41,7 @@ class MheDowntimeActionPlan extends Model
             'action_plan_date' => 'date',
             'timeline_from' => 'date',
             'timeline_to' => 'date',
-            'date_implemented' => 'date',
+            'date_implemented' => 'datetime',
             'confirmed_at' => 'datetime',
             'rejected_at' => 'datetime',
         ];
@@ -105,5 +105,17 @@ class MheDowntimeActionPlan extends Model
     public function isCancelled(): bool
     {
         return $this->status === DowntimeActionPlanStatus::Cancelled;
+    }
+
+    public function parentShowUrl(): ?string
+    {
+        if ($this->mhe_downtime_id === null) {
+            return null;
+        }
+
+        return route('mhe-downtimes.show', [
+            'mhe_downtime' => $this->mhe_downtime_id,
+            'action_plan' => $this->id,
+        ]);
     }
 }

@@ -3,25 +3,25 @@
 use App\Http\Controllers\ActionPlanConfirmationController;
 use App\Http\Controllers\ActionPlanController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChecklistGroupController;
 use App\Http\Controllers\ChecklistItemController;
-use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\MheCategoryController;
 use App\Http\Controllers\MheDowntimeActionPlanConfirmationController;
 use App\Http\Controllers\MheDowntimeActionPlanController;
 use App\Http\Controllers\MheDowntimeAttachmentController;
-use App\Http\Controllers\MheDowntimeImportController;
 use App\Http\Controllers\MheDowntimeController;
+use App\Http\Controllers\MheDowntimeImportController;
 use App\Http\Controllers\MheDowntimeReportController;
-use App\Http\Controllers\MheUptimeDashboardController;
 use App\Http\Controllers\MheInventoryController;
 use App\Http\Controllers\MheTypeController;
-use App\Http\Controllers\RegionController;
+use App\Http\Controllers\MheUptimeDashboardController;
 use App\Http\Controllers\PmsAttachmentController;
 use App\Http\Controllers\PmsController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SiteController;
@@ -39,6 +39,10 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/dashboard/pms-schedule', [DashboardController::class, 'pmsSchedule'])
         ->middleware('permission:dashboard.view')
         ->name('dashboard.pms-schedule');
+
+    Route::get('/dashboard/units', [DashboardController::class, 'units'])
+        ->middleware('permission:dashboard.view')
+        ->name('dashboard.units');
 
     Route::get('/dashboard/mhe-uptime', [MheUptimeDashboardController::class, 'index'])
         ->middleware('permission:mhe-downtimes.view')
@@ -80,19 +84,16 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     });
 
     Route::middleware('permission:action-plans.view')->group(function (): void {
-        Route::get('action-plans', [ActionPlanController::class, 'index'])->name('action-plans.index');
         Route::get('action-plans/{action_plan}', [ActionPlanController::class, 'show'])->name('action-plans.show');
     });
 
     Route::middleware('permission:action-plans.confirm')->prefix('mhe-downtime-action-plan-confirmations')->name('mhe-downtime-action-plan-confirmations.')->group(function (): void {
-        Route::get('/', [MheDowntimeActionPlanConfirmationController::class, 'index'])->name('index');
         Route::get('/{actionPlan}', [MheDowntimeActionPlanConfirmationController::class, 'show'])->name('show');
         Route::post('/{actionPlan}/confirm', [MheDowntimeActionPlanConfirmationController::class, 'confirm'])->name('confirm');
         Route::post('/{actionPlan}/reject', [MheDowntimeActionPlanConfirmationController::class, 'reject'])->name('reject');
     });
 
     Route::middleware('permission:action-plans.confirm')->prefix('action-plan-confirmations')->name('action-plan-confirmations.')->group(function (): void {
-        Route::get('/', [ActionPlanConfirmationController::class, 'index'])->name('index');
         Route::get('/{actionPlan}', [ActionPlanConfirmationController::class, 'show'])->name('show');
         Route::post('/{actionPlan}/confirm', [ActionPlanConfirmationController::class, 'confirm'])->name('confirm');
         Route::post('/{actionPlan}/reject', [ActionPlanConfirmationController::class, 'reject'])->name('reject');
@@ -193,6 +194,9 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::middleware('permission:mhe-downtimes.view')->prefix('mhes')->name('mhes.')->group(function (): void {
         Route::get('summary', [MheDowntimeReportController::class, 'summary'])->name('summary');
         Route::get('summary/action-plans', [MheDowntimeReportController::class, 'summaryActionPlans'])->name('summary.action-plans');
+    });
+
+    Route::middleware('permission:mhe-utilization.view')->prefix('mhes')->name('mhes.')->group(function (): void {
         Route::get('utilization', [MheDowntimeReportController::class, 'utilization'])->name('utilization');
     });
 

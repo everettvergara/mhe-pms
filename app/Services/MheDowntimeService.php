@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\DowntimeActionPlanStatus;
 use App\Enums\DowntimeStatus;
-use App\Enums\RecordStatus;
 use App\Models\MheDowntime;
+use App\Models\MheDowntimeActionPlan;
 use App\Models\MheInventory;
 use App\Models\User;
 use Carbon\Carbon;
@@ -91,12 +92,10 @@ class MheDowntimeService
 
         return DB::transaction(function () use ($downtime, $user, $data) {
             $dateOfIncident = isset($data['date_of_incident']) ? Carbon::parse($data['date_of_incident']) : null;
-            $uptime = isset($data['uptime']) ? Carbon::parse($data['uptime']) : null;
 
             $downtime->update([
                 'date_of_incident' => $dateOfIncident,
-                'uptime' => $uptime,
-                'hours_down' => self::computeHoursDown($dateOfIncident, $uptime),
+                'hours_down' => self::computeHoursDown($dateOfIncident, $downtime->uptime),
                 'updated_by' => $user->id,
             ]);
 
@@ -215,6 +214,35 @@ class MheDowntimeService
         });
     }
 
+    public function syncUptimeFromActionItems(MheDowntime $downtime): MheDowntime
+    {
+        $plans = $downtime->actionPlans()
+            ->where('status', '!=', DowntimeActionPlanStatus::Cancelled)
+            ->get();
+
+        $implemented = [
+            DowntimeActionPlanStatus::WaitingForFastConfirmation,
+            DowntimeActionPlanStatus::Confirmed,
+        ];
+
+        $complete = $plans->isNotEmpty()
+            && $plans->every(fn (MheDowntimeActionPlan $plan) => in_array($plan->status, $implemented, true));
+
+        $uptime = null;
+
+        if ($complete) {
+            $latest = $plans->pluck('date_implemented')->filter()->max();
+            $uptime = $latest instanceof Carbon ? $latest : ($latest ? Carbon::parse($latest) : null);
+        }
+
+        $downtime->update([
+            'uptime' => $uptime,
+            'hours_down' => self::computeHoursDown($downtime->date_of_incident, $uptime),
+        ]);
+
+        return $downtime;
+    }
+
     public static function computeHoursDown(?Carbon $from, ?Carbon $to): ?float
     {
         if ($from === null || $to === null) {
@@ -231,7 +259,6 @@ class MheDowntimeService
     protected function payloadFromData(array $data): array
     {
         $dateOfIncident = isset($data['date_of_incident']) ? Carbon::parse($data['date_of_incident']) : null;
-        $uptime = isset($data['uptime']) ? Carbon::parse($data['uptime']) : null;
         $refUnitNo = trim((string) ($data['ref_unit_no'] ?? ''));
         $inventory = $refUnitNo !== ''
             ? self::findInventoryForUnit((int) $data['site_id'], $refUnitNo)
@@ -246,8 +273,8 @@ class MheDowntimeService
             'supplier_id' => $inventory?->supplier_id ?? ($data['supplier_id'] ?? null),
             'ref_unit_no' => $refUnitNo,
             'date_of_incident' => $dateOfIncident,
-            'uptime' => $uptime,
-            'hours_down' => self::computeHoursDown($dateOfIncident, $uptime),
+            'uptime' => null,
+            'hours_down' => null,
             'root_cause' => $data['root_cause'] ?? null,
             'description' => $data['description'] ?? null,
             'w_spare_unit' => (bool) ($data['w_spare_unit'] ?? false),

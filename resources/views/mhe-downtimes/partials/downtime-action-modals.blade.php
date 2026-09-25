@@ -58,6 +58,10 @@
     </template>
 @endforeach
 
+@if(request()->filled('action_plan'))
+    <div id="action-plan-deeplink" data-plan-id="{{ request('action_plan') }}" hidden></div>
+@endif
+
 <div class="modal fade" id="downtimeActionPlanModal" tabindex="-1" aria-labelledby="dt-ap-modal-title" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">

@@ -16,6 +16,13 @@
         <dt class="col-sm-3">Description</dt><dd class="col-sm-9">{{ $plan->description }}</dd>
         <dt class="col-sm-3">Responsible</dt><dd class="col-sm-9">{{ $plan->responsible_person }}</dd>
         <dt class="col-sm-3">Timeline</dt><dd class="col-sm-9">{{ $plan->timeline_from?->format('Y-m-d') }} to {{ $plan->timeline_to?->format('Y-m-d') }}</dd>
+        @unless($canEditFields)
+            <dt class="col-sm-3">Unit safe</dt>
+            <dd class="col-sm-9">
+                <x-unit-safe-checkbox :checked="$plan->unit_safe_guaranteed" />
+                <span class="ms-1">I guarantee that the unit is safe to use</span>
+            </dd>
+        @endunless
         @if($plan->rejection_remarks)
             <dt class="col-sm-3">Rejection</dt><dd class="col-sm-9 text-danger">{{ $plan->rejection_remarks }}</dd>
         @endif
@@ -47,11 +54,28 @@
                         <textarea name="comment" class="form-control form-control-sm" rows="2" placeholder="Add progress comment..." required></textarea>
                     </div>
                     <div class="col-md-4">
-                        <select name="progress_status" class="form-select form-select-sm mb-1" required>
+                        <select name="progress_status" class="form-select form-select-sm" data-progress-status required>
                             @foreach($progressStatuses as $status)
                                 <option value="{{ $status->value }}">{{ $status->value }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    @if($canEditFields)
+                        <div class="col-12">
+                            <label class="form-check-label d-flex align-items-start gap-2 mb-0">
+                                <input
+                                    type="checkbox"
+                                    name="unit_safe_guaranteed"
+                                    value="1"
+                                    class="form-check-input mt-1"
+                                    data-unit-safe-checkbox
+                                    disabled
+                                >
+                                <span>I guarantee that the unit is safe to use</span>
+                            </label>
+                        </div>
+                    @endif
+                    <div class="col-md-4">
                         <button type="submit" class="btn btn-sm btn-outline-primary w-100">Add Comment</button>
                     </div>
                 </div>
@@ -59,13 +83,6 @@
         @endif
 
         <div class="d-flex flex-wrap gap-2">
-            @if($canManagePlan && in_array($plan->status, [\App\Enums\ActionPlanStatus::Pending, \App\Enums\ActionPlanStatus::Rejected], true))
-                <form method="POST" action="{{ route('action-plans.mark-implemented', $plan) }}" onsubmit="return confirm('Mark as implemented?')">
-                    @csrf
-                    @if($returnTo)<input type="hidden" name="return_to" value="{{ $returnTo }}">@endif
-                    <button type="submit" class="btn btn-sm btn-success">Mark Implemented</button>
-                </form>
-            @endif
             @if($canManagePlan && $plan->status !== \App\Enums\ActionPlanStatus::Cancelled && $plan->status !== \App\Enums\ActionPlanStatus::Confirmed)
                 <form method="POST" action="{{ route('action-plans.cancel', $plan) }}" onsubmit="return confirm('Cancel this action plan?')">
                     @csrf
@@ -74,5 +91,21 @@
                 </form>
             @endif
         </div>
+
+        @if(auth()->user()->can('confirm', $plan) && $plan->status === \App\Enums\ActionPlanStatus::WaitingForFastConfirmation)
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <form method="POST" action="{{ route('action-plan-confirmations.confirm', $plan) }}" onsubmit="return confirm('Confirm this action plan?')">
+                    @csrf
+                    <button class="btn btn-sm btn-success">Confirm</button>
+                </form>
+                <form method="POST" action="{{ route('action-plan-confirmations.reject', $plan) }}" class="flex-grow-1" style="max-width:500px" onsubmit="return confirm('Reject this action plan?')">
+                    @csrf
+                    <div class="input-group">
+                        <textarea name="rejection_remarks" class="form-control form-control-sm" rows="1" placeholder="Rejection remarks (required)" required></textarea>
+                        <button class="btn btn-sm btn-danger">Reject</button>
+                    </div>
+                </form>
+            </div>
+        @endif
     </div>
 </div>

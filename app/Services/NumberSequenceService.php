@@ -15,7 +15,7 @@ class NumberSequenceService
     {
         $prefix = match ($type) {
             'pms' => 'PMS',
-            'action_plan' => 'AP',
+            'action_plan' => 'JO',
             'downtime_action_plan' => 'DT-AP',
             default => throw new InvalidArgumentException("Invalid sequence type: {$type}"),
         };

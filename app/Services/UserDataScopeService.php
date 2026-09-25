@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\MheDowntime;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class UserDataScopeService
 {
@@ -14,7 +15,7 @@ class UserDataScopeService
     }
 
     /**
-     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     public function scopePmsHeader(Builder $query, User $user): void
     {
@@ -32,7 +33,7 @@ class UserDataScopeService
     }
 
     /**
-     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     public function scopeActionPlan(Builder $query, User $user): void
     {
@@ -46,7 +47,7 @@ class UserDataScopeService
     }
 
     /**
-     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     public function scopeSupplier(Builder $query, User $user): void
     {
@@ -62,7 +63,7 @@ class UserDataScopeService
     }
 
     /**
-     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     public function scopeSite(Builder $query, User $user): void
     {
@@ -102,7 +103,7 @@ class UserDataScopeService
     }
 
     /**
-     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     public function scopeMheDowntime(Builder $query, User $user): void
     {
@@ -120,7 +121,7 @@ class UserDataScopeService
     }
 
     /**
-     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     public function scopeMheDowntimeActionPlan(Builder $query, User $user): void
     {
@@ -168,11 +169,17 @@ class UserDataScopeService
     }
 
     /**
-     * @param  Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @param  Builder<Model>  $query
      */
     public function scopeMheInventory(Builder $query, User $user): void
     {
         if (! $this->applies($user)) {
+            return;
+        }
+
+        if ($user->isSupplier() && $user->assignedSupplierIds() === []) {
+            $query->whereRaw('0 = 1');
+
             return;
         }
 
@@ -183,5 +190,28 @@ class UserDataScopeService
         }
 
         $query->whereIn('site_id', $user->assignedSiteIds());
+    }
+
+    public function canAccessMheInventory(User $user, int $siteId, ?int $supplierId = null): bool
+    {
+        if (! $this->applies($user)) {
+            return true;
+        }
+
+        if ($user->isSupplier() && $user->assignedSupplierIds() === []) {
+            return false;
+        }
+
+        $supplierIds = $user->assignedSupplierIds();
+
+        if ($supplierIds !== []) {
+            if ($supplierId === null || ! in_array($supplierId, $supplierIds, true)) {
+                return false;
+            }
+        }
+
+        $siteIds = $user->assignedSiteIds();
+
+        return $siteIds !== [] && in_array($siteId, $siteIds, true);
     }
 }

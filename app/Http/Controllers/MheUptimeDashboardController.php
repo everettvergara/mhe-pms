@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MheUptimeDashboardRequest;
 use App\Models\District;
-use App\Models\MheType;
 use App\Models\Site;
 use App\Models\Supplier;
 use App\Services\MheUptimeDashboardService;
@@ -30,8 +29,6 @@ class MheUptimeDashboardController extends Controller
             'districts' => District::query()->orderBy('district_name')->get(),
             'sites' => $this->sitesForUser($request),
             'suppliers' => $this->suppliersForUser($request),
-            'mheTypes' => MheType::query()->orderBy('description')->get(),
-            'chartColors' => ['#005BAC', '#4F9DDA', '#F58220', '#198754', '#6c757d', '#6610f2', '#dc3545', '#0dcaf0'],
         ]);
     }
 
@@ -40,18 +37,24 @@ class MheUptimeDashboardController extends Controller
         $query = Site::query()->orderBy('site_name');
         $this->userDataScopeService->scopeSite($query, $request->user());
 
-        if ($request->filled('district_id')) {
-            $query->where('district_id', $request->input('district_id'));
-        }
-
         return $query->get();
     }
 
     protected function suppliersForUser(Request $request)
     {
+        $user = $request->user();
         $query = Supplier::query()->orderBy('supplier_name');
-        $this->userDataScopeService->scopeSupplier($query, $request->user());
 
-        return $query->get();
+        if ($user->isSuperAdmin() || $user->isFastAdmin()) {
+            return $query->get();
+        }
+
+        $supplierIds = $user->assignedSupplierIds();
+
+        if ($supplierIds === []) {
+            return $query->whereRaw('0 = 1')->get();
+        }
+
+        return $query->whereIn('id', $supplierIds)->get();
     }
 }

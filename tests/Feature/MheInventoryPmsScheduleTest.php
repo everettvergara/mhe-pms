@@ -7,16 +7,17 @@ use App\Enums\PmsStatus;
 use App\Enums\RecordStatus;
 use App\Models\ChecklistGroup;
 use App\Models\ChecklistItem;
+use App\Models\District;
 use App\Models\MheInventory;
 use App\Models\MheType;
 use App\Models\PmsDetail;
 use App\Models\PmsHeader;
-use App\Models\District;
 use App\Models\Site;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\MheInventoryPmsScheduleService;
+use App\Services\PmsScheduleReportService;
 use Database\Seeders\PermissionSeeder;
-use App\Services\DashboardService;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\CreatesMheInventoryForPms;
@@ -120,18 +121,148 @@ class MheInventoryPmsScheduleTest extends TestCase
         $this->assertSame($olderPms->id, $this->inventory->last_pms_header_id);
     }
 
-    public function test_dashboard_schedule_uses_inventory_records(): void
+    public function test_schedule_page_retrieves_current_month_without_a_retrieve_action(): void
     {
-        $this->inventory->update([
-            'next_pms_date' => now()->addDays(5),
-            'last_pms_header_id' => $this->createSubmittedPms('PMS-DASH', now()->addDays(5)->format('Y-m-d'))->id,
+        $districtName = $this->site->district()->value('district_name');
+
+        $this->actingAs($this->supplierUser)
+            ->get(route('dashboard.pms-schedule'))
+            ->assertOk()
+            ->assertSee('name="district_id"', false)
+            ->assertSee('data-controls-site="pms-schedule-site"', false)
+            ->assertSee('name="site_id"', false)
+            ->assertSee('name="year"', false)
+            ->assertSee('name="month"', false)
+            ->assertDontSee('>Retrieve<', false)
+            ->assertSeeInOrder([
+                'District: '.$districtName.' (1)',
+                'Site: '.$this->site->site_name.' (1)',
+                'Supplier: '.$this->supplier->supplier_name.' (1)',
+                'U-001',
+            ], false);
+    }
+
+    public function test_retrieve_shows_serviced_unit_pms_date(): void
+    {
+        $earlier = now()->startOfMonth();
+        $later = now()->startOfMonth()->addDays(10);
+        $this->createSubmittedPms('PMS-EARLY', now()->addMonth()->toDateString(), $earlier);
+        $laterPms = $this->createSubmittedPms('PMS-LATER', now()->addMonths(2)->toDateString(), $later);
+
+        $unit = $this->unitRowFor('U-001');
+
+        $this->assertTrue($unit['serviced']);
+        $this->assertSame($later->toDateString(), $unit['pms_date']);
+        $this->assertSame($laterPms->id, $unit['pms_id']);
+        $this->assertSame('PMS-LATER', $unit['pms_no']);
+        $this->assertNull($unit['last_serviced']);
+        $this->assertNull($unit['next_service']);
+    }
+
+    public function test_retrieve_shows_last_and_next_dates_when_not_serviced(): void
+    {
+        $lastServiced = now()->subMonth()->startOfMonth()->addDays(2);
+        $nextService = now()->addMonth()->startOfMonth()->toDateString();
+        $this->createSubmittedPms('PMS-LAST', $nextService, $lastServiced);
+        $this->createDraftPms();
+
+        $unit = $this->unitRowFor('U-001');
+
+        $this->assertFalse($unit['serviced']);
+        $this->assertNull($unit['pms_date']);
+        $this->assertSame($lastServiced->toDateString(), $unit['last_serviced']);
+        $this->assertSame($nextService, $unit['next_service']);
+    }
+
+    public function test_retrieve_excludes_units_outside_district_site_and_supplier(): void
+    {
+        $otherDistrict = District::query()->create([
+            'district_code' => 'D-OTHER',
+            'district_name' => 'Other District',
+            'status' => RecordStatus::Active,
+        ]);
+        $otherSite = Site::query()->create([
+            'district_id' => $otherDistrict->id,
+            'site_code' => 'SITE-OTHER',
+            'site_name' => 'Other Site',
+            'status' => RecordStatus::Active,
+        ]);
+        $otherSupplier = Supplier::query()->create([
+            'supplier_code' => 'SUP-OTHER',
+            'supplier_name' => 'Other Supplier',
+            'status' => RecordStatus::Active,
         ]);
 
-        $data = app(DashboardService::class)->pmsSchedule($this->supplierUser);
+        $this->createInventoryForPms($this->site, $otherSupplier, $this->mheType, 'U-OTHER-SUP');
+        $this->createInventoryForPms($otherSite, $this->supplier, $this->mheType, 'U-OTHER-SITE');
+        $inactive = $this->createInventoryForPms($this->site, $this->supplier, $this->mheType, 'U-INACTIVE');
+        $inactive->update(['equipment_status' => RecordStatus::Inactive]);
 
-        $this->assertSame(1, $data['kpis']['total_scheduled']);
-        $this->assertCount(1, $data['records']);
-        $this->assertSame($this->inventory->id, $data['records']->first()->id);
+        $unitNos = collect($this->reportGroups())
+            ->flatMap(fn (array $district) => $district['sites'])
+            ->flatMap(fn (array $site) => $site['suppliers'])
+            ->flatMap(fn (array $supplier) => $supplier['units'])
+            ->pluck('unit_no')
+            ->all();
+
+        $this->assertSame(['U-001'], $unitNos);
+        $this->assertSame([], $this->reportGroups(['site_id' => $otherSite->id]));
+        $this->assertSame([], $this->reportGroups(['district_id' => $otherDistrict->id]));
+    }
+
+    public function test_retrieve_page_lists_units_grouped_by_district_site_and_supplier(): void
+    {
+        $districtName = $this->site->district()->value('district_name');
+
+        $this->actingAs($this->supplierUser)
+            ->get(route('dashboard.pms-schedule', [
+                'year' => now()->year,
+                'month' => now()->month,
+            ]))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'District: '.$districtName.' (1)',
+                'Site: '.$this->site->site_name.' (1)',
+                'Supplier: '.$this->supplier->supplier_name.' (1)',
+                'U-001',
+                'No',
+            ], false)
+            ->assertSee('class="d-none" data-parent="district-0"', false)
+            ->assertSee('aria-expanded="false"', false);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return list<array<string, mixed>>
+     */
+    protected function reportGroups(array $overrides = []): array
+    {
+        return app(PmsScheduleReportService::class)->groups($this->supplierUser, array_merge([
+            'district_id' => null,
+            'site_id' => null,
+            'year' => (int) now()->year,
+            'month' => (int) now()->month,
+        ], $overrides));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function unitRowFor(string $unitNo): array
+    {
+        foreach ($this->reportGroups() as $district) {
+            foreach ($district['sites'] as $site) {
+                foreach ($site['suppliers'] as $supplier) {
+                    foreach ($supplier['units'] as $unit) {
+                        if ($unit['unit_no'] === $unitNo) {
+                            return $unit;
+                        }
+                    }
+                }
+            }
+        }
+
+        $this->fail('Unit '.$unitNo.' was not in the schedule report.');
     }
 
     protected function createDraftPms(): PmsHeader
@@ -174,14 +305,14 @@ class MheInventoryPmsScheduleTest extends TestCase
         return $pms->load('pmsDetails');
     }
 
-    protected function createSubmittedPms(string $pmsNo, string $nextScheduleDate): PmsHeader
+    protected function createSubmittedPms(string $pmsNo, string $nextScheduleDate, mixed $dateFrom = null): PmsHeader
     {
         $pms = PmsHeader::query()->create([
             'pms_no' => $pmsNo,
             'supplier_id' => $this->supplier->id,
             'site_id' => $this->site->id,
             'technician_name' => 'Tech One',
-            'date_from' => now(),
+            'date_from' => $dateFrom ?? now(),
             'date_to' => now()->addDay(),
             'next_schedule_date' => $nextScheduleDate,
             'mhe_type_id' => $this->mheType->id,
@@ -193,7 +324,7 @@ class MheInventoryPmsScheduleTest extends TestCase
             'updated_by' => $this->supplierUser->id,
         ]);
 
-        app(\App\Services\MheInventoryPmsScheduleService::class)->syncFromPmsHeader($pms);
+        app(MheInventoryPmsScheduleService::class)->syncFromPmsHeader($pms);
 
         return $pms;
     }

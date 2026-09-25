@@ -8,6 +8,7 @@ use App\Enums\PmsStatus;
 use App\Http\Controllers\Concerns\HandlesListPage;
 use App\Http\Requests\ReportFilterRequest;
 use App\Models\ActionPlan;
+use App\Models\MheDowntimeActionPlan;
 use App\Models\PmsHeader;
 use App\Models\Site;
 use App\Models\Supplier;
@@ -17,8 +18,8 @@ use App\Services\UserDataScopeService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -54,8 +55,15 @@ class ReportController extends Controller
         }
 
         $state = $this->resolveListState($request, "reports.{$type}", ['sort' => 'created_at', 'direction' => 'desc']);
-        $data = $this->buildReportData($type, $filters, $user);
-        $records = $this->paginateList($data['query'], $state);
+
+        if ($type === 'action-plans') {
+            $data = $this->actionPlansReport($filters);
+            $records = $this->paginateRows($data['rows'], $state);
+        } else {
+            $data = $this->buildReportData($type, $filters, $user);
+            $records = $this->paginateList($data['query'], $state);
+        }
+
         $rowMapper = $data['rowMapper'];
 
         $suppliersQuery = Supplier::query()->orderBy('supplier_name');
@@ -71,6 +79,7 @@ class ReportController extends Controller
             'filters' => $filters,
             'columns' => $data['columns'],
             'rowMapper' => $rowMapper,
+            'rowUrl' => $data['rowUrl'] ?? null,
             'suppliers' => $suppliersQuery->get(),
             'sites' => $sitesQuery->get(),
         ]);
@@ -88,8 +97,13 @@ class ReportController extends Controller
             return $this->exportSupplierCompliance($filters, $format, $user);
         }
 
-        $data = $this->buildReportData($type, $filters, $user);
-        $rows = $data['query']->get();
+        if ($type === 'action-plans') {
+            $data = $this->actionPlansReport($filters);
+            $rows = $data['rows'];
+        } else {
+            $data = $this->buildReportData($type, $filters, $user);
+            $rows = $data['query']->get();
+        }
         $title = $this->reportTypes()[$type];
 
         if ($format === 'csv') {
@@ -206,7 +220,6 @@ class ReportController extends Controller
         return match ($type) {
             'pms-summary' => $this->pmsSummaryReport($filters),
             'findings' => $this->findingsReport($filters),
-            'action-plans' => $this->actionPlansReport($filters),
             'pending-confirmation' => $this->pendingConfirmationReport($filters),
             default => abort(404),
         };
@@ -267,8 +280,47 @@ class ReportController extends Controller
      */
     protected function actionPlansReport(array $filters): array
     {
+        $sourceType = (string) ($filters['source_type'] ?? '');
+        $rows = collect();
+
+        if ($sourceType !== 'mhe-downtime') {
+            $rows = $rows->concat($this->pmsActionPlanReportRows($filters));
+        }
+
+        if ($sourceType !== 'pms') {
+            $rows = $rows->concat($this->downtimeActionPlanReportRows($filters));
+        }
+
+        $rows = $rows
+            ->sortByDesc(fn (object $row) => $row->created_at?->getTimestamp() ?? 0)
+            ->values();
+
+        return [
+            'rows' => $rows,
+            'columns' => ['Type', 'Action Plan No.', 'Reference', 'Supplier', 'Site', 'Title', 'Responsible', 'Status', 'Timeline'],
+            'rowMapper' => fn (object $row) => [
+                $row->type_label,
+                $row->action_plan_no,
+                $row->reference,
+                $row->supplier,
+                $row->site,
+                $row->title,
+                $row->responsible,
+                $row->status,
+                $row->timeline,
+            ],
+            'rowUrl' => fn (object $row) => $row->url,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, object>
+     */
+    protected function pmsActionPlanReportRows(array $filters): Collection
+    {
         $query = ActionPlan::query()
-            ->with(['pmsDetail.checklistItem', 'pmsDetail.pmsHeader.supplier', 'pmsDetail.pmsHeader.site']);
+            ->with(['pmsDetail.pmsHeader.supplier', 'pmsDetail.pmsHeader.site']);
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -284,20 +336,89 @@ class ReportController extends Controller
 
         $this->applyActionPlanSiteFilters($query, $filters);
 
-        return [
-            'query' => $query,
-            'columns' => ['Action Plan No.', 'PMS No.', 'Supplier', 'Site', 'Title', 'Responsible', 'Status', 'Timeline'],
-            'rowMapper' => fn (ActionPlan $a) => [
-                $a->action_plan_no,
-                $a->pmsDetail?->pmsHeader?->pms_no,
-                $a->pmsDetail?->pmsHeader?->supplier?->supplier_name,
-                $a->pmsDetail?->pmsHeader?->site?->site_name,
-                $a->title,
-                $a->responsible_person,
-                $a->status?->value,
-                $a->timeline_from?->format('Y-m-d').' - '.$a->timeline_to?->format('Y-m-d'),
-            ],
-        ];
+        return $query->get()->map(function (ActionPlan $actionPlan): object {
+            $header = $actionPlan->pmsDetail?->pmsHeader;
+
+            return (object) [
+                'type_label' => 'PMS',
+                'action_plan_no' => $actionPlan->action_plan_no,
+                'reference' => $header?->pms_no,
+                'supplier' => $header?->supplier?->supplier_name,
+                'site' => $header?->site?->site_name,
+                'title' => $actionPlan->title,
+                'responsible' => $actionPlan->responsible_person,
+                'status' => $actionPlan->status?->value,
+                'timeline' => $actionPlan->timeline_from?->format('Y-m-d').' - '.$actionPlan->timeline_to?->format('Y-m-d'),
+                'url' => $actionPlan->parentShowUrl(),
+                'created_at' => $actionPlan->created_at,
+            ];
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return Collection<int, object>
+     */
+    protected function downtimeActionPlanReportRows(array $filters): Collection
+    {
+        $query = MheDowntimeActionPlan::query()
+            ->with(['mheDowntime.supplier', 'mheDowntime.site']);
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['supplier_id'])) {
+            $query->whereHas('mheDowntime', fn (Builder $q) => $q->where('supplier_id', $filters['supplier_id']));
+        }
+
+        if (! empty($filters['supplier_ids'])) {
+            $query->whereHas('mheDowntime', fn (Builder $q) => $q->whereIn('supplier_id', $filters['supplier_ids']));
+        }
+
+        if (! empty($filters['site_id'])) {
+            $query->whereHas('mheDowntime', fn (Builder $q) => $q->where('site_id', $filters['site_id']));
+        }
+
+        if (! empty($filters['site_ids'])) {
+            $query->whereHas('mheDowntime', fn (Builder $q) => $q->whereIn('site_id', $filters['site_ids']));
+        }
+
+        return $query->get()->map(function (MheDowntimeActionPlan $actionPlan): object {
+            $downtime = $actionPlan->mheDowntime;
+
+            return (object) [
+                'type_label' => 'MHE Downtime',
+                'action_plan_no' => $actionPlan->action_plan_no,
+                'reference' => $downtime ? '#'.$downtime->id : null,
+                'supplier' => $downtime?->supplier?->supplier_name,
+                'site' => $downtime?->site?->site_name,
+                'title' => $actionPlan->title,
+                'responsible' => $actionPlan->responsible_person,
+                'status' => $actionPlan->status?->value,
+                'timeline' => $actionPlan->timeline_from?->format('Y-m-d').' - '.$actionPlan->timeline_to?->format('Y-m-d'),
+                'url' => $actionPlan->parentShowUrl(),
+                'created_at' => $actionPlan->created_at,
+            ];
+        });
+    }
+
+    /**
+     * @param  Collection<int, object>  $rows
+     * @param  array<string, mixed>  $state
+     */
+    protected function paginateRows(Collection $rows, array $state): LengthAwarePaginator
+    {
+        $perPage = (int) ($state['per_page'] ?? $this->defaultPerPage);
+        $page = max(1, (int) ($state['page'] ?? 1));
+
+        return new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()],
+        );
     }
 
     /**

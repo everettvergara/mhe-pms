@@ -43,18 +43,16 @@
                 </button>
             </form>
         @endif
-        @if($canManageActionPlans)
-            <button
-                type="button"
-                class="btn btn-link btn-sm p-0"
-                title="Update status"
-                data-ap-action="detail"
-                data-plan-id="{{ $plan->id }}"
-                data-downtime-id="{{ $downtime->id }}"
-                data-item-label="{{ $contextLabel }}"
-            >
-                <i class="bi bi-arrow-repeat"></i>
-            </button>
-        @endif
+        <button
+            type="button"
+            class="btn btn-link btn-sm p-0"
+            title="{{ $canManageActionPlans ? 'Update status' : 'View' }}"
+            data-ap-action="detail"
+            data-plan-id="{{ $plan->id }}"
+            data-downtime-id="{{ $downtime->id }}"
+            data-item-label="{{ $contextLabel }}"
+        >
+            <i class="bi {{ $canManageActionPlans ? 'bi-arrow-repeat' : 'bi-eye' }}"></i>
+        </button>
     </td>
 </tr>

@@ -26,6 +26,7 @@ class PermissionSeeder extends Seeder
             ['module' => 'MHE Categories', 'action' => 'view', 'slug' => 'mhe-categories.view', 'description' => 'View MHE categories'],
             ['module' => 'MHE Categories', 'action' => 'manage', 'slug' => 'mhe-categories.manage', 'description' => 'Manage MHE categories'],
             ['module' => 'MHE Downtimes', 'action' => 'view', 'slug' => 'mhe-downtimes.view', 'description' => 'View MHE downtimes'],
+            ['module' => 'MHE + PMS Site Utilization', 'action' => 'view', 'slug' => 'mhe-utilization.view', 'description' => 'View which sites are using PMS and MHE'],
             ['module' => 'MHE Downtimes', 'action' => 'manage', 'slug' => 'mhe-downtimes.manage', 'description' => 'Manage MHE downtimes'],
             ['module' => 'MHE Downtimes', 'action' => 'post', 'slug' => 'mhe-downtimes.post', 'description' => 'Post MHE downtimes'],
             ['module' => 'MHE Downtimes', 'action' => 'import', 'slug' => 'mhe-downtimes.import', 'description' => 'Import Eagle Eye downtime history'],

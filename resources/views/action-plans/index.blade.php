@@ -1,8 +1,0 @@
-@extends('layouts.app')
-@section('title', 'Action Plans')
-@section('content')
-<x-page-header title="Action Plans" :breadcrumbs="['Transactions'=>null,'Action Plans'=>null]" />
-<x-list-toolbar :route="route('action-plans.index')" :state="$state" :create-route="null" :show-create="false" />
-<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>No.</th><th>PMS</th><th>Title</th><th>Responsible</th><th>Due</th><th>Status</th><th class="col-actions">Actions</th></tr></thead>
-<tbody>@forelse($records as $ap)@php $pmsHeader = $ap->pmsDetail?->pmsHeader; $canViewPms = $pmsHeader && auth()->user()->can('view', $pmsHeader); @endphp<tr data-href="{{ route('action-plans.show',$ap) }}"><td>{{ $ap->action_plan_no }}</td><td>@if($canViewPms)<a href="{{ route('pms.show', $pmsHeader) }}" target="_blank" rel="noopener noreferrer">{{ $pmsHeader->pms_no }}</a>@else{{ $pmsHeader?->pms_no ?? '—' }}@endif</td><td>{{ $ap->title }}</td><td>{{ $ap->responsible_person }}</td><td>{{ $ap->timeline_to?->format('Y-m-d') }}</td><td><x-status-badge :status="$ap->status"/></td><td class="col-actions"><x-row-actions :model="$ap" :show-route="route('action-plans.show', $ap)" :edit-route="route('action-plans.edit', $ap)" :show-edit="auth()->user()->can('update', $ap)" :related-route="$canViewPms ? route('pms.show', $pmsHeader) : null" related-title="View PMS" /></td></tr>@empty<tr><td colspan="7" class="text-center text-muted py-4">No action plans.</td></tr>@endforelse</tbody></table></div>@if($records->hasPages())<div class="card-footer">{{ $records->links() }}</div>@endif</div>
-@endsection

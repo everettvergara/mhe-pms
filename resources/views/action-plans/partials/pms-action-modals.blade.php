@@ -12,6 +12,7 @@
                             <th>Responsible</th>
                             <th>Timeline</th>
                             <th>Status</th>
+                            <th title="I guarantee that the unit is safe to use">Unit safe</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -57,6 +58,10 @@
         </template>
     @endforeach
 @endforeach
+
+@if(request()->filled('action_plan'))
+    <div id="action-plan-deeplink" data-plan-id="{{ request('action_plan') }}" hidden></div>
+@endif
 
 <div class="modal fade" id="pmsActionPlanModal" tabindex="-1" aria-labelledby="ap-modal-title" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">

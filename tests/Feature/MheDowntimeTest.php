@@ -1,106 +1,55 @@
 <?php
 
-
-
 namespace Tests\Feature;
 
-
-
 use App\Enums\DowntimeActionPlanStatus;
-
 use App\Enums\DowntimeStatus;
-
 use App\Enums\RecordStatus;
-
 use App\Models\District;
-
 use App\Models\MheCategory;
-
 use App\Models\MheDowntime;
-
 use App\Models\MheInventory;
-
 use App\Models\MheType;
-
 use App\Models\Site;
-
 use App\Models\Supplier;
-
 use App\Models\User;
-
 use App\Services\MheDowntimeService;
-
 use Carbon\Carbon;
-
 use Database\Seeders\PermissionSeeder;
-
 use Database\Seeders\RoleSeeder;
-
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use Illuminate\Http\UploadedFile;
-
 use Illuminate\Support\Facades\Storage;
-
 use Tests\TestCase;
 
-
-
 class MheDowntimeTest extends TestCase
-
 {
-
     use RefreshDatabase;
-
-
 
     protected Supplier $supplier;
 
-
-
     protected Site $site;
-
-
 
     protected Site $otherSite;
 
-
-
     protected MheType $mheType;
-
-
 
     protected MheCategory $mheCategory;
 
-
-
     protected MheInventory $inventory;
-
-
 
     protected User $siteUser;
 
-
-
     protected User $otherSiteUser;
-
-
 
     protected User $fastAdmin;
 
-
-
     protected function setUp(): void
-
     {
 
         parent::setUp();
 
-
-
         $this->seed([PermissionSeeder::class, RoleSeeder::class]);
-
-
 
         $this->supplier = Supplier::query()->create([
 
@@ -112,11 +61,7 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $district = District::query()->first();
-
-
 
         $this->site = Site::query()->create([
 
@@ -130,8 +75,6 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $this->otherSite = Site::query()->create([
 
             'district_id' => $district->id,
@@ -144,8 +87,6 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $this->mheType = MheType::query()->create([
 
             'code' => 'FL',
@@ -156,8 +97,6 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $this->mheCategory = MheCategory::query()->create([
 
             'code' => 'Damage',
@@ -167,8 +106,6 @@ class MheDowntimeTest extends TestCase
             'status' => RecordStatus::Active,
 
         ]);
-
-
 
         $this->inventory = MheInventory::query()->create([
 
@@ -184,8 +121,6 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $this->siteUser = User::factory()->supplier()->create([
 
             'supplier_id' => $this->supplier->id,
@@ -193,8 +128,6 @@ class MheDowntimeTest extends TestCase
         ]);
 
         $this->siteUser->sites()->attach($this->site->id);
-
-
 
         $this->otherSiteUser = User::factory()->supplier()->create([
 
@@ -209,15 +142,10 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_user_can_create_draft_downtime(): void
-
     {
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), $this->payload());
-
-
 
         $downtime = MheDowntime::query()->first();
 
@@ -225,7 +153,9 @@ class MheDowntimeTest extends TestCase
 
         $this->assertSame(DowntimeStatus::Draft, $downtime->status);
 
-        $this->assertSame(2.0, (float) $downtime->hours_down);
+        $this->assertNull($downtime->uptime);
+
+        $this->assertNull($downtime->hours_down);
 
         $this->assertSame($this->inventory->id, $downtime->mhe_inventory_id);
 
@@ -233,10 +163,7 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_create_with_blank_ref_unit_requires_supplier(): void
-
     {
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
@@ -247,18 +174,13 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertSessionHasErrors('supplier_id');
 
         $this->assertSame(0, MheDowntime::query()->count());
 
     }
 
-
-
     public function test_create_with_blank_ref_unit_and_supplier_succeeds(): void
-
     {
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
@@ -270,8 +192,6 @@ class MheDowntimeTest extends TestCase
             'supplier_id' => $this->supplier->id,
 
         ]);
-
-
 
         $downtime = MheDowntime::query()->first();
 
@@ -285,10 +205,7 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_create_with_unknown_unit_requires_supplier(): void
-
     {
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
@@ -299,18 +216,13 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertSessionHasErrors('supplier_id');
 
         $this->assertSame(0, MheDowntime::query()->count());
 
     }
 
-
-
     public function test_create_with_unknown_unit_and_supplier_succeeds(): void
-
     {
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
@@ -322,8 +234,6 @@ class MheDowntimeTest extends TestCase
             'supplier_id' => $this->supplier->id,
 
         ]);
-
-
 
         $downtime = MheDowntime::query()->first();
 
@@ -337,10 +247,7 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_create_with_missing_site_id_fails_validation(): void
-
     {
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
@@ -351,18 +258,13 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertSessionHasErrors('site_id');
 
         $this->assertSame(0, MheDowntime::query()->count());
 
     }
 
-
-
     public function test_create_with_unassigned_site_id_fails_validation(): void
-
     {
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
@@ -373,23 +275,16 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertSessionHasErrors('site_id');
 
         $this->assertSame(0, MheDowntime::query()->count());
 
     }
 
-
-
     public function test_create_saves_site_id_not_site_name(): void
-
     {
 
         $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), $this->payload());
-
-
 
         $downtime = MheDowntime::query()->first();
 
@@ -398,8 +293,6 @@ class MheDowntimeTest extends TestCase
         $this->assertSame('Site One', $downtime->site->site_name);
 
     }
-
-
 
     public function test_lookup_site_matches_by_site_name(): void
     {
@@ -416,7 +309,6 @@ class MheDowntimeTest extends TestCase
     }
 
     public function test_search_units_is_scoped_to_site(): void
-
     {
 
         MheInventory::query()->create([
@@ -433,15 +325,11 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response = $this->actingAs($this->siteUser)->getJson(route('mhe-downtimes.search-units', [
 
             'site_id' => $this->site->id,
 
         ]));
-
-
 
         $response->assertOk();
 
@@ -451,37 +339,131 @@ class MheDowntimeTest extends TestCase
 
         $this->assertNotContains('FL-OTHER', $unitNumbers);
 
+        $response->assertJsonFragment([
+            'unit_no' => 'FL-001',
+            'mhe_type_id' => $this->mheType->id,
+            'supplier_id' => $this->supplier->id,
+            'mhe_type_label' => 'FL — Forklift',
+            'supplier_name' => 'Supplier One',
+            'label' => 'FL-001 (FL — Forklift)',
+        ]);
+
     }
 
+    public function test_site_dropdown_returns_every_assigned_site_for_downtime_and_pms(): void
+    {
+        $districtId = $this->site->district_id;
 
+        for ($i = 1; $i <= 24; $i++) {
+            $site = Site::query()->create([
+                'district_id' => $districtId,
+                'site_code' => 'S'.$i,
+                'site_name' => 'Assigned Site '.$i,
+                'status' => RecordStatus::Active,
+            ]);
+            $this->fastAdmin->sites()->attach($site->id);
+            $this->siteUser->sites()->attach($site->id);
+        }
+
+        $expected = Site::query()
+            ->whereIn('id', $this->siteUser->sites()->pluck('sites.id'))
+            ->where('status', RecordStatus::Active)
+            ->orderBy('site_name')
+            ->pluck('site_name')
+            ->all();
+
+        $downtime = $this->actingAs($this->fastAdmin)->getJson(route('mhe-downtimes.search-sites'));
+        $pms = $this->actingAs($this->siteUser)->getJson(route('pms.search-sites'));
+
+        $downtime->assertOk();
+        $pms->assertOk();
+        $this->assertSame($expected, collect($downtime->json())->pluck('site_name')->all());
+        $this->assertSame($expected, collect($pms->json())->pluck('site_name')->all());
+        $this->assertGreaterThan(20, count($expected));
+    }
+
+    public function test_lookup_unit_returns_type_and_supplier(): void
+    {
+        $response = $this->actingAs($this->siteUser)->getJson(route('mhe-downtimes.lookup-unit', [
+            'site_id' => $this->site->id,
+            'ref_unit_no' => 'FL-001',
+        ]));
+
+        $response->assertOk()->assertJson([
+            'matched' => true,
+            'unit_no' => 'FL-001',
+            'supplier_id' => $this->supplier->id,
+            'mhe_type_id' => $this->mheType->id,
+        ]);
+    }
+
+    public function test_create_form_puts_unit_before_type_and_supplier(): void
+    {
+        $response = $this->actingAs($this->fastAdmin)->get(route('mhe-downtimes.create'));
+
+        $response->assertOk();
+        $html = $response->getContent();
+        $unit = strpos($html, '<select name="ref_unit_no" id="ref_unit_no"');
+        $type = strpos($html, 'id="mhe_type_id"');
+        $supplier = strpos($html, 'id="supplier_id"');
+
+        $this->assertNotFalse($unit);
+        $this->assertNotFalse($type);
+        $this->assertNotFalse($supplier);
+        $this->assertLessThan($type, $unit);
+        $this->assertLessThan($supplier, $type);
+        $this->assertStringNotContainsString('list="unit-numbers"', $html);
+        $response->assertSee('Automatically updated when implemented by supplier', false);
+        $response->assertSee('form-text text-danger', false);
+        $this->assertSame(2, substr_count($response->getContent(), 'Automatically updated when implemented by supplier'));
+    }
 
     public function test_create_form_defaults_datetime_fields_to_now(): void
-
     {
 
         $now = now()->format('Y-m-d\TH:i');
 
-
-
         $response = $this->actingAs($this->siteUser)->get(route('mhe-downtimes.create'));
-
-
 
         $response->assertOk();
 
         $response->assertSee('value="'.$now.'"', false);
 
+        $response->assertSee('value="Site One (SITE1)"', false);
+
+        $response->assertSee('id="site_id" value="'.$this->site->id.'"', false);
+
+        $fastAdminResponse = $this->actingAs($this->fastAdmin)->get(route('mhe-downtimes.create'));
+
+        $fastAdminResponse->assertOk();
+
+        $fastAdminResponse->assertSee('value="Site One (SITE1)"', false);
+
+        $fastAdminResponse->assertSee('id="site_id" value="'.$this->site->id.'"', false);
+
     }
 
+    public function test_create_form_leaves_site_blank_when_multiple_sites_are_assigned(): void
+    {
 
+        $this->fastAdmin->sites()->attach($this->otherSite->id);
+
+        $response = $this->actingAs($this->fastAdmin)->get(route('mhe-downtimes.create'));
+
+        $response->assertOk();
+
+        $response->assertSee('id="site_id" value=""', false);
+
+        $response->assertDontSee('value="Site One (SITE1)"', false);
+
+        $response->assertDontSee('value="Site Two (SITE2)"', false);
+
+    }
 
     public function test_user_can_post_draft_downtime(): void
-
     {
 
         $downtime = $this->createDraftDowntime();
-
-
 
         $response = $this->actingAs($this->siteUser)->put(route('mhe-downtimes.update', $downtime), [
 
@@ -491,8 +473,6 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertRedirect(route('mhe-downtimes.show', $downtime));
         $response->assertSessionHas('success', 'MHE downtime posted successfully.');
 
@@ -504,15 +484,10 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_user_can_post_draft_downtime_with_final_alias(): void
-
     {
 
         $downtime = $this->createDraftDowntime();
-
-
 
         $response = $this->actingAs($this->siteUser)->put(route('mhe-downtimes.update', $downtime), [
 
@@ -522,8 +497,6 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertRedirect(route('mhe-downtimes.show', $downtime));
         $response->assertSessionHas('success', 'MHE downtime posted successfully.');
 
@@ -535,33 +508,26 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_posted_downtime_allows_datetime_updates(): void
-
     {
 
         $downtime = $this->createPostedDowntime();
 
-
-
         $response = $this->actingAs($this->fastAdmin)->put(route('mhe-downtimes.update', $downtime), [
 
-            'date_of_incident' => '2026-02-01T08:00',
+            'date_of_incident' => '2026-01-01T06:00',
 
             'uptime' => '2026-02-01T12:00',
 
         ]);
 
-
-
         $response->assertRedirect(route('mhe-downtimes.show', $downtime));
 
         $downtime->refresh();
 
-        $this->assertSame('2026-02-01 08:00:00', $downtime->date_of_incident?->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-01-01 06:00:00', $downtime->date_of_incident?->format('Y-m-d H:i:s'));
 
-        $this->assertSame('2026-02-01 12:00:00', $downtime->uptime?->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-01-01 10:00:00', $downtime->uptime?->format('Y-m-d H:i:s'));
 
         $this->assertSame(4.0, (float) $downtime->hours_down);
 
@@ -569,19 +535,12 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_user_can_cancel_draft_downtime(): void
-
     {
 
         $downtime = $this->createDraftDowntime();
 
-
-
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.cancel', $downtime));
-
-
 
         $response->assertRedirect(route('mhe-downtimes.show', $downtime));
 
@@ -589,19 +548,12 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_user_can_revert_posted_downtime_to_draft(): void
-
     {
 
         $downtime = $this->createPostedDowntime();
 
-
-
         $response = $this->actingAs($this->fastAdmin)->post(route('mhe-downtimes.revert-to-draft', $downtime));
-
-
 
         $response->assertRedirect(route('mhe-downtimes.show', $downtime));
 
@@ -613,28 +565,18 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_user_cannot_access_other_site_downtime(): void
-
     {
 
         $downtime = $this->createDraftDowntime();
 
-
-
         $response = $this->actingAs($this->otherSiteUser)->get(route('mhe-downtimes.show', $downtime));
-
-
 
         $response->assertForbidden();
 
     }
 
-
-
     public function test_supplier_cannot_access_other_supplier_downtime_at_same_site(): void
-
     {
 
         $otherSupplier = Supplier::query()->create([
@@ -646,8 +588,6 @@ class MheDowntimeTest extends TestCase
             'status' => RecordStatus::Active,
 
         ]);
-
-
 
         $otherSupplierUser = User::factory()->supplier()->create([
 
@@ -657,24 +597,15 @@ class MheDowntimeTest extends TestCase
 
         $otherSupplierUser->sites()->attach($this->site->id);
 
-
-
         $downtime = $this->createDraftDowntime();
 
-
-
         $response = $this->actingAs($otherSupplierUser)->get(route('mhe-downtimes.show', $downtime));
-
-
 
         $response->assertForbidden();
 
     }
 
-
-
     public function test_supplier_index_excludes_other_supplier_downtimes_at_same_site(): void
-
     {
 
         $otherSupplier = Supplier::query()->create([
@@ -687,19 +618,13 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $ownDowntime = $this->createDraftDowntime();
 
         $otherDowntime = $this->createDraftDowntime();
 
         $otherDowntime->update(['supplier_id' => $otherSupplier->id, 'title' => 'Other supplier issue']);
 
-
-
         $response = $this->actingAs($this->siteUser)->get(route('mhe-downtimes.index'));
-
-
 
         $response->assertOk();
 
@@ -709,27 +634,18 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_cannot_delete_posted_downtime(): void
-
     {
 
         $downtime = $this->createPostedDowntime();
 
-
-
         $response = $this->actingAs($this->siteUser)->delete(route('mhe-downtimes.destroy', $downtime));
-
-
 
         $response->assertForbidden();
 
         $this->assertNotNull($downtime->fresh());
 
     }
-
-
 
     public function test_action_plan_mark_implemented_waits_for_fast_confirmation(): void
     {
@@ -749,8 +665,9 @@ class MheDowntimeTest extends TestCase
         $this->assertSame(DowntimeActionPlanStatus::WaitingForFastConfirmation, $actionPlan->status);
         $this->assertNotNull($actionPlan->date_implemented);
 
-        $this->actingAs($admin)->post(route('mhe-downtime-action-plan-confirmations.confirm', $actionPlan))
-            ->assertRedirect(route('mhe-downtime-action-plan-confirmations.index'));
+        $this->actingAs($admin)->post(route('mhe-downtime-action-plan-confirmations.confirm', $actionPlan), [
+            'date_implemented' => $actionPlan->date_implemented?->format('Y-m-d\TH:i'),
+        ])->assertRedirect($actionPlan->parentShowUrl());
 
         $actionPlan->refresh();
         $this->assertSame(DowntimeActionPlanStatus::Confirmed, $actionPlan->status);
@@ -769,7 +686,7 @@ class MheDowntimeTest extends TestCase
 
         $this->actingAs($admin)->post(route('mhe-downtime-action-plan-confirmations.reject', $actionPlan), [
             'rejection_remarks' => 'Incomplete work',
-        ])->assertRedirect(route('mhe-downtime-action-plan-confirmations.index'));
+        ])->assertRedirect($actionPlan->parentShowUrl());
 
         $actionPlan->refresh();
         $this->assertSame(DowntimeActionPlanStatus::Rejected, $actionPlan->status);
@@ -783,31 +700,117 @@ class MheDowntimeTest extends TestCase
         $this->assertSame('Updated hose replacement', $actionPlan->title);
     }
 
+    public function test_when_to_tracks_the_latest_implemented_action_item(): void
+    {
+        $downtime = $this->createPostedDowntime();
 
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
+
+        $downtime->refresh();
+        $this->assertNull($downtime->uptime);
+        $this->assertNull($downtime->hours_down);
+
+        $first = $downtime->actionPlans()->first();
+
+        try {
+            Carbon::setTestNow('2026-03-01 09:15:00');
+            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $first]));
+
+            $downtime->refresh();
+            $first->refresh();
+            $this->assertSame('2026-03-01 09:15:00', $first->date_implemented?->format('Y-m-d H:i:s'));
+            $this->assertSame('2026-03-01 09:15:00', $downtime->uptime?->format('Y-m-d H:i:s'));
+            $this->assertSame(
+                MheDowntimeService::computeHoursDown($downtime->date_of_incident, $downtime->uptime),
+                (float) $downtime->hours_down,
+            );
+
+            Carbon::setTestNow('2026-03-02 11:00:00');
+            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload([
+                'title' => 'Second repair',
+            ]));
+
+            $downtime->refresh();
+            $this->assertNull($downtime->uptime);
+            $this->assertNull($downtime->hours_down);
+
+            $second = $downtime->actionPlans()->where('title', 'Second repair')->first();
+
+            Carbon::setTestNow('2026-03-04 16:45:00');
+            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $second]));
+
+            $downtime->refresh();
+            $this->assertSame('2026-03-04 16:45:00', $downtime->uptime?->format('Y-m-d H:i:s'));
+            $this->assertSame(
+                MheDowntimeService::computeHoursDown($downtime->date_of_incident, $downtime->uptime),
+                (float) $downtime->hours_down,
+            );
+
+            $this->actingAs($this->fastAdmin)->post(route('mhe-downtime-action-plan-confirmations.reject', $second), [
+                'rejection_remarks' => 'Needs more work',
+            ]);
+
+            $downtime->refresh();
+            $this->assertNull($downtime->uptime);
+            $this->assertNull($downtime->hours_down);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_fast_admin_can_correct_implementation_datetime_on_confirm(): void
+    {
+        $downtime = $this->createPostedDowntime();
+
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
+        $actionPlan = $downtime->actionPlans()->first();
+
+        try {
+            Carbon::setTestNow('2026-03-01 09:15:00');
+            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]));
+        } finally {
+            Carbon::setTestNow();
+        }
+
+        $actionPlan->refresh();
+
+        $this->actingAs($this->fastAdmin)
+            ->post(route('mhe-downtime-action-plan-confirmations.confirm', $actionPlan))
+            ->assertSessionHasErrors('date_implemented');
+
+        $this->assertSame(DowntimeActionPlanStatus::WaitingForFastConfirmation, $actionPlan->fresh()->status);
+
+        $this->actingAs($this->fastAdmin)->post(route('mhe-downtime-action-plan-confirmations.confirm', $actionPlan), [
+            'date_implemented' => '2026-03-01T11:45',
+        ])->assertRedirect($actionPlan->parentShowUrl());
+
+        $actionPlan->refresh();
+        $downtime->refresh();
+
+        $this->assertSame(DowntimeActionPlanStatus::Confirmed, $actionPlan->status);
+        $this->assertSame('2026-03-01 11:45:00', $actionPlan->date_implemented?->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-03-01 11:45:00', $downtime->uptime?->format('Y-m-d H:i:s'));
+        $this->assertSame(
+            MheDowntimeService::computeHoursDown($downtime->date_of_incident, $downtime->uptime),
+            (float) $downtime->hours_down,
+        );
+    }
 
     public function test_compute_hours_down_matches_service(): void
-
     {
 
         $from = Carbon::parse('2026-01-01 08:00:00');
 
         $to = Carbon::parse('2026-01-01 10:30:00');
 
-
-
         $this->assertSame(2.5, MheDowntimeService::computeHoursDown($from, $to));
 
     }
 
-
-
     public function test_create_draft_with_attachments_persists_files(): void
-
     {
 
         Storage::fake('public');
-
-
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
 
@@ -823,8 +826,6 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $downtime = MheDowntime::query()->first();
 
         $response->assertRedirect(route('mhe-downtimes.show', $downtime));
@@ -835,15 +836,10 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     public function test_create_draft_rejects_non_image_attachments(): void
-
     {
 
         Storage::fake('public');
-
-
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.store'), [
 
@@ -857,25 +853,18 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertSessionHasErrors('files.0');
 
         $this->assertSame(0, MheDowntime::query()->count());
 
     }
 
-
-
     public function test_update_draft_uploads_photos_via_attachment_route(): void
-
     {
 
         Storage::fake('public');
 
         $downtime = $this->createDraftDowntime();
-
-
 
         $response = $this->actingAs($this->siteUser)->post(route('mhe-downtimes.attachments.store', $downtime), [
 
@@ -887,15 +876,11 @@ class MheDowntimeTest extends TestCase
 
         ]);
 
-
-
         $response->assertRedirect(route('mhe-downtimes.show', $downtime));
 
         $this->assertSame(1, $downtime->fresh()->attachments()->count());
 
     }
-
-
 
     public function test_supplier_cannot_save_posted_downtime(): void
     {
@@ -981,16 +966,31 @@ class MheDowntimeTest extends TestCase
         $response->assertSee('Transaction Photos', false);
     }
 
+    public function test_fast_admin_can_open_action_item_from_downtime(): void
+    {
+        $downtime = $this->createPostedDowntime();
 
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
+        $actionPlan = $downtime->actionPlans()->first();
+
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]));
+
+        $response = $this->actingAs($this->fastAdmin)->get(route('mhe-downtimes.show', [
+            'mhe_downtime' => $downtime,
+            'action_plan' => $actionPlan->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('data-ap-action="detail"', false);
+        $response->assertSee('id="action-plan-deeplink"', false);
+        $response->assertSee('id="dt-ap-detail-'.$actionPlan->id.'"', false);
+        $response->assertSee(route('mhe-downtime-action-plan-confirmations.confirm', $actionPlan), false);
+    }
 
     /**
-
      * @return array<string, mixed>
-
      */
-
     protected function payload(): array
-
     {
 
         return [
@@ -1034,10 +1034,7 @@ class MheDowntimeTest extends TestCase
         ], $overrides);
     }
 
-
-
     protected function createDraftDowntime(array $overrides = []): MheDowntime
-
     {
 
         return MheDowntime::query()->create(array_merge([
@@ -1060,10 +1057,7 @@ class MheDowntimeTest extends TestCase
 
     }
 
-
-
     protected function createPostedDowntime(array $overrides = []): MheDowntime
-
     {
 
         return MheDowntime::query()->create(array_merge([
@@ -1089,7 +1083,4 @@ class MheDowntimeTest extends TestCase
         ], $overrides));
 
     }
-
 }
-
-

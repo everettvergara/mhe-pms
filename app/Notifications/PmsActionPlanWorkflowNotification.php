@@ -47,8 +47,10 @@ class PmsActionPlanWorkflowNotification extends Notification implements ShouldQu
             $message->line('Rejection Remarks: '.$this->rejectionRemarks);
         }
 
+        $actionUrl = $actionPlan->parentShowUrl() ?? route('action-plans.show', $actionPlan);
+
         return $message
-            ->action($this->actionLabel(), route('action-plans.show', $actionPlan))
+            ->action($this->actionLabel(), $actionUrl)
             ->line($this->closingLine());
     }
 

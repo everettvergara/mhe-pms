@@ -20,6 +20,9 @@ class ActionPlan extends Model
         'timeline_from',
         'timeline_to',
         'status',
+        'unit_safe_guaranteed',
+        'unit_safe_guaranteed_by',
+        'unit_safe_guaranteed_at',
         'confirmed_by',
         'confirmed_at',
         'rejected_by',
@@ -35,6 +38,8 @@ class ActionPlan extends Model
             'timeline_from' => 'date',
             'timeline_to' => 'date',
             'status' => ActionPlanStatus::class,
+            'unit_safe_guaranteed' => 'boolean',
+            'unit_safe_guaranteed_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'rejected_at' => 'datetime',
         ];
@@ -60,6 +65,11 @@ class ActionPlan extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function unitSafeGuarantor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'unit_safe_guaranteed_by');
+    }
+
     public function confirmer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmed_by');
@@ -80,5 +90,20 @@ class ActionPlan extends Model
             PmsStatus::WithFindings,
             PmsStatus::NoFindings,
         ]));
+    }
+
+    public function parentShowUrl(): ?string
+    {
+        $this->loadMissing('pmsDetail');
+        $pmsHeaderId = $this->pmsDetail?->pms_header_id;
+
+        if ($pmsHeaderId === null) {
+            return null;
+        }
+
+        return route('pms.show', [
+            'pms' => $pmsHeaderId,
+            'action_plan' => $this->id,
+        ]);
     }
 }

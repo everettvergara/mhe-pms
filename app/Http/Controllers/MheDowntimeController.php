@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DowntimeStatus;
+use App\Enums\ProgressStatus;
 use App\Enums\RecordStatus;
 use App\Http\Controllers\Concerns\HandlesListPage;
 use App\Http\Controllers\Concerns\NormalizesUploadedFiles;
@@ -11,6 +12,7 @@ use App\Http\Requests\UpdateMheDowntimeRequest;
 use App\Models\District;
 use App\Models\MheCategory;
 use App\Models\MheDowntime;
+use App\Models\MheDowntimeActionPlan;
 use App\Models\MheType;
 use App\Models\Site;
 use App\Models\Supplier;
@@ -198,6 +200,7 @@ class MheDowntimeController extends Controller
                 (int) $request->query('site_id'),
                 $request->query('mhe_type_id') ? (int) $request->query('mhe_type_id') : null,
                 $request->query('q'),
+                $request->boolean('all') ? null : 20,
             )
         );
     }
@@ -215,6 +218,7 @@ class MheDowntimeController extends Controller
         return response()->json([
             'matched' => $result['matched'],
             'supplier_id' => $result['supplier_id'],
+            'mhe_type_id' => $result['mhe_type_id'],
             'unit_no' => $result['unit_no'],
         ]);
     }
@@ -257,7 +261,7 @@ class MheDowntimeController extends Controller
         $canEditTimes = ! $isNew && $downtime->isPosted() && $request->user()->can('update', $downtime);
         $canManageActionPlans = ! $isNew
             && $downtime->isPosted()
-            && $request->user()->can('create', \App\Models\MheDowntimeActionPlan::class);
+            && $request->user()->can('create', MheDowntimeActionPlan::class);
 
         return [
             'downtime' => $downtime,
@@ -273,7 +277,7 @@ class MheDowntimeController extends Controller
             'canRevertToDraft' => ! $isNew && $request->user()->can('revertToDraft', $downtime),
             'canUploadAttachments' => $canEdit,
             'canManageActionPlans' => $canManageActionPlans,
-            'progressStatuses' => \App\Enums\ProgressStatus::cases(),
+            'progressStatuses' => ProgressStatus::cases(),
         ];
     }
 
@@ -337,6 +341,10 @@ class MheDowntimeController extends Controller
 
         if (! empty($filters['needs_action_plan'])) {
             $query->needsActionPlan();
+        }
+
+        if (! empty($filters['currently_down'])) {
+            $query->currentlyDown();
         }
     }
 

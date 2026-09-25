@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Enums\DowntimeActionPlanStatus;
-use App\Enums\DowntimeStatus;
 use App\Enums\ProgressStatus;
 use App\Models\MheDowntime;
 use App\Models\MheDowntimeActionPlan;
 use App\Models\MheDowntimeActionPlanComment;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
@@ -20,6 +20,7 @@ class MheDowntimeActionPlanService
         protected ActivityLogService $activityLogService,
         protected UserDataScopeService $userDataScopeService,
         protected DowntimeNotificationService $downtimeNotificationService,
+        protected MheDowntimeService $downtimeService,
     ) {}
 
     /**
@@ -54,6 +55,7 @@ class MheDowntimeActionPlanService
             );
 
             $this->downtimeNotificationService->notifyActionPlanCreated($actionPlan);
+            $this->downtimeService->syncUptimeFromActionItems($downtime);
 
             return $actionPlan->load(['attachments', 'comments.creator']);
         });
@@ -147,7 +149,7 @@ class MheDowntimeActionPlanService
         return DB::transaction(function () use ($actionPlan, $user) {
             $actionPlan->update([
                 'status' => DowntimeActionPlanStatus::WaitingForFastConfirmation,
-                'date_implemented' => now()->toDateString(),
+                'date_implemented' => now(),
                 'updated_by' => $user->id,
             ]);
 
@@ -160,12 +162,13 @@ class MheDowntimeActionPlanService
             );
 
             $this->downtimeNotificationService->notifyActionPlanImplemented($actionPlan);
+            $this->downtimeService->syncUptimeFromActionItems($actionPlan->mheDowntime);
 
             return $actionPlan->refresh()->load(['attachments', 'comments.creator']);
         });
     }
 
-    public function confirm(User $user, MheDowntimeActionPlan $actionPlan): MheDowntimeActionPlan
+    public function confirm(User $user, MheDowntimeActionPlan $actionPlan, Carbon $dateImplemented): MheDowntimeActionPlan
     {
         if (! $user->isFastAdmin()) {
             throw new RuntimeException('Only FAST administrators can confirm action items.');
@@ -177,9 +180,10 @@ class MheDowntimeActionPlanService
 
         $this->assertPostedDowntime($actionPlan->mheDowntime);
 
-        return DB::transaction(function () use ($user, $actionPlan) {
+        return DB::transaction(function () use ($user, $actionPlan, $dateImplemented) {
             $actionPlan->update([
                 'status' => DowntimeActionPlanStatus::Confirmed,
+                'date_implemented' => $dateImplemented,
                 'confirmed_by' => $user->id,
                 'confirmed_at' => now(),
                 'updated_by' => $user->id,
@@ -194,6 +198,7 @@ class MheDowntimeActionPlanService
             );
 
             $this->downtimeNotificationService->notifyActionPlanConfirmed($actionPlan);
+            $this->downtimeService->syncUptimeFromActionItems($actionPlan->mheDowntime);
 
             return $actionPlan->refresh()->load(['attachments', 'comments.creator', 'mheDowntime']);
         });
@@ -233,6 +238,7 @@ class MheDowntimeActionPlanService
             );
 
             $this->downtimeNotificationService->notifyActionPlanRejected($actionPlan, $rejectionRemarks);
+            $this->downtimeService->syncUptimeFromActionItems($actionPlan->mheDowntime);
 
             return $actionPlan->refresh()->load(['attachments', 'comments.creator', 'mheDowntime']);
         });
@@ -265,6 +271,8 @@ class MheDowntimeActionPlanService
                 "Cancelled action item {$actionPlan->action_plan_no}.",
             );
 
+            $this->downtimeService->syncUptimeFromActionItems($actionPlan->mheDowntime);
+
             return $actionPlan->refresh()->load(['attachments', 'comments.creator']);
         });
     }
@@ -280,8 +288,10 @@ class MheDowntimeActionPlanService
 
         DB::transaction(function () use ($actionPlan, $user) {
             $actionPlanNo = $actionPlan->action_plan_no;
+            $downtime = $actionPlan->mheDowntime;
             $actionPlan->update(['updated_by' => $user->id]);
             $actionPlan->delete();
+            $this->downtimeService->syncUptimeFromActionItems($downtime);
 
             $this->activityLogService->log(
                 $user,

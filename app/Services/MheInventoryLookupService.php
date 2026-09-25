@@ -27,8 +27,7 @@ class MheInventoryLookupService
                         ->orWhere('site_code', 'like', '%'.$term.'%');
                 });
             })
-            ->orderBy('site_name')
-            ->limit(20);
+            ->orderBy('site_name');
 
         $this->userDataScopeService->scopeSite($query, $user);
 
@@ -76,27 +75,41 @@ class MheInventoryLookupService
     }
 
     /**
-     * @return array<int, array{unit_no: string|null, supplier_id: int|null, mhe_type_id: int|null}>
+     * @return array<int, array{unit_no: string|null, supplier_id: int|null, supplier_name: string, mhe_type_id: int|null, mhe_type_label: string, label: string}>
      */
-    public function searchUnits(User $user, int $siteId, ?int $mheTypeId = null, ?string $term = null): array
+    public function searchUnits(User $user, int $siteId, ?int $mheTypeId = null, ?string $term = null, ?int $limit = 20): array
     {
         if (! $this->userDataScopeService->canAccessSite($user, $siteId)) {
             return [];
         }
 
         $query = $this->scopedInventoryQuery($user)
+            ->with([
+                'mheType:id,code,description',
+                'supplier:id,supplier_name',
+            ])
             ->where('equipment_status', RecordStatus::Active)
             ->where('site_id', $siteId)
             ->when($mheTypeId, fn (Builder $q) => $q->where('mhe_type_id', $mheTypeId))
             ->when($term !== null && $term !== '', fn (Builder $q) => $q->where('unit_no', 'like', '%'.$term.'%'))
             ->orderBy('unit_no')
-            ->limit(20);
+            ->when($limit !== null, fn (Builder $q) => $q->limit($limit));
 
-        return $query->get(['unit_no', 'supplier_id', 'mhe_type_id'])->map(fn (MheInventory $inventory) => [
-            'unit_no' => $inventory->unit_no,
-            'supplier_id' => $inventory->supplier_id,
-            'mhe_type_id' => $inventory->mhe_type_id,
-        ])->all();
+        return $query->get(['id', 'unit_no', 'supplier_id', 'mhe_type_id'])->map(function (MheInventory $inventory): array {
+            $typeLabel = $inventory->mheType
+                ? $inventory->mheType->code.' — '.$inventory->mheType->description
+                : '';
+            $supplierName = trim((string) ($inventory->supplier?->supplier_name ?? ''));
+
+            return [
+                'unit_no' => $inventory->unit_no,
+                'supplier_id' => $inventory->supplier_id,
+                'supplier_name' => $supplierName,
+                'mhe_type_id' => $inventory->mhe_type_id,
+                'mhe_type_label' => $typeLabel,
+                'label' => $inventory->unit_no.' ('.($typeLabel !== '' ? $typeLabel : '—').')',
+            ];
+        })->all();
     }
 
     /**

@@ -15,17 +15,19 @@
         @endif
         @if($can('mhe-downtimes.view'))
             <a href="{{ route('mhes.summary') }}" class="nav-link {{ $active('mhes.summary') }}">
-                <i class="bi bi-bar-chart me-2"></i>MHE Summary
+                <i class="bi bi-bar-chart me-2"></i>MHE Downtime Summary
             </a>
-            <a href="{{ route('mhes.utilization') }}" class="nav-link {{ $active('mhes.utilization') }}">
-                <i class="bi bi-grid me-2"></i>MHE Utilization
-            </a>
+            @if($can('mhe-utilization.view'))
+                <a href="{{ route('mhes.utilization') }}" class="nav-link {{ $active('mhes.utilization') }}">
+                    <i class="bi bi-grid me-2"></i>MHE + PMS Site Utilization
+                </a>
+            @endif
             <a href="{{ route('dashboard.mhe-uptime') }}" class="nav-link {{ $active('dashboard.mhe-uptime') }}">
-                <i class="bi bi-graph-up me-2"></i>MHE Uptime
+                <i class="bi bi-graph-up me-2"></i>MHE Uptime Summary
             </a>
         @endif
 
-        @if($can('pms.view') || $can('action-plans.view') || $can('action-plans.confirm') || $can('mhe-downtimes.view'))
+        @if($can('pms.view') || $can('mhe-downtimes.view'))
             <div class="menu-group">Transactions</div>
             @if($can('mhe-downtimes.view'))
                 <a href="{{ route('mhe-downtimes.index') }}" class="nav-link {{ $active('mhe-downtimes.*') }}">
@@ -35,19 +37,6 @@
             @if($can('pms.view'))
                 <a href="{{ route('pms.index') }}" class="nav-link {{ $active('pms.*') }}">
                     <i class="bi bi-clipboard-check me-2"></i>Preventive Maintenance
-                </a>
-            @endif
-            @if($can('action-plans.view'))
-                <a href="{{ route('action-plans.index') }}" class="nav-link {{ $active('action-plans.*') }}">
-                    <i class="bi bi-list-task me-2"></i>Action Plans
-                </a>
-            @endif
-            @if($can('action-plans.confirm'))
-                <a href="{{ route('action-plan-confirmations.index') }}" class="nav-link {{ $active('action-plan-confirmations.*') }}">
-                    <i class="bi bi-check2-square me-2"></i>Action Plan Confirmation
-                </a>
-                <a href="{{ route('mhe-downtime-action-plan-confirmations.index') }}" class="nav-link {{ $active('mhe-downtime-action-plan-confirmations.*') }}">
-                    <i class="bi bi-check2-circle me-2"></i>Downtime Action Plan Confirmation
                 </a>
             @endif
         @endif

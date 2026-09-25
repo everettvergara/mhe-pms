@@ -2,12 +2,10 @@
 <div class="border-top pt-3 mt-3">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <strong>Action Items</strong>
-        @if($canManageActionPlans ?? false)
-            @include('mhe-downtimes.partials.downtime-action-toolbar', [
-                'downtime' => $downtime,
-                'canManageActionPlans' => $canManageActionPlans,
-            ])
-        @endif
+        @include('mhe-downtimes.partials.downtime-action-toolbar', [
+            'downtime' => $downtime,
+            'canManageActionPlans' => $canManageActionPlans ?? false,
+        ])
     </div>
     <p class="text-muted small mb-3">Action items are managed by the supplier after the downtime is posted.</p>
 
@@ -21,9 +19,7 @@
                         <th>Responsible</th>
                         <th>Timeline</th>
                         <th>Status</th>
-                        @if($canManageActionPlans ?? false)
-                            <th></th>
-                        @endif
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>

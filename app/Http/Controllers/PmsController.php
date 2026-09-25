@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class PmsController extends Controller
@@ -60,8 +61,7 @@ class PmsController extends Controller
                 ['actionPlans as action_plans_count'],
                 collect(ActionPlanStatus::cases())->mapWithKeys(
                     fn (ActionPlanStatus $status) => [
-                        "actionPlans as {$status->countAttribute()}"
-                            => fn (Builder $q) => $q->where('action_plans.status', $status->value),
+                        "actionPlans as {$status->countAttribute()}" => fn (Builder $q) => $q->where('action_plans.status', $status->value),
                     ]
                 )->all()
             ));
@@ -190,6 +190,7 @@ class PmsController extends Controller
                 (int) $request->query('site_id'),
                 $request->query('mhe_type_id') ? (int) $request->query('mhe_type_id') : null,
                 $request->query('q'),
+                null,
             )
         );
     }
@@ -252,7 +253,7 @@ class PmsController extends Controller
     }
 
     /**
-     * @return array{sites: \Illuminate\Support\Collection, suppliers: \Illuminate\Support\Collection, mheTypes: \Illuminate\Support\Collection}
+     * @return array{sites: Collection, suppliers: Collection, mheTypes: Collection}
      */
     protected function formOptions(Request $request): array
     {

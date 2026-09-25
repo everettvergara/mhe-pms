@@ -2,6 +2,13 @@
     $dateFrom = old('date_from', $pms->date_from?->format('Y-m-d'));
     $readOnly = $readOnly ?? false;
     $selectedSiteId = old('site_id', $pms->site_id);
+    if ($isNew && blank($selectedSiteId)) {
+        $assignedSites = $sites ?? collect();
+        $onlySite = $assignedSites->count() === 1 ? $assignedSites->first() : null;
+        if ($onlySite?->status === \App\Enums\RecordStatus::Active) {
+            $selectedSiteId = $onlySite->id;
+        }
+    }
     $selectedSite = ($sites ?? collect())->firstWhere('id', (int) $selectedSiteId) ?? $pms->site;
     $siteLabel = $selectedSite
         ? $selectedSite->site_name.' ('.$selectedSite->site_code.')'
@@ -37,15 +44,23 @@
                 @if($readOnly)
                     <div class="small">{{ $pms->site?->site_name }}</div>
                 @else
-                    <input type="text"
-                           id="pms_site_search"
-                           list="pms-site-options"
-                           class="form-control form-control-sm @error('site_id') is-invalid @enderror"
-                           value="{{ old('site_search', $siteLabel) }}"
-                           autocomplete="off"
-                           required>
+                    <div class="suggest-field">
+                        <input type="text"
+                               id="pms_site_search"
+                               class="form-control form-control-sm suggest-field-input @error('site_id') is-invalid @enderror"
+                               value="{{ old('site_search', $siteLabel) }}"
+                               autocomplete="off"
+                               required>
+                        <button type="button" class="suggest-field-toggle" id="pms-site-options-toggle" aria-label="Show sites">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div id="pms-site-options" class="suggest-menu">
+                            <button type="button" class="suggest-scroll-btn" data-scroll="-1" aria-label="Scroll up"><i class="bi bi-chevron-up"></i></button>
+                            <div id="pms-site-options-list" class="suggest-menu-list"></div>
+                            <button type="button" class="suggest-scroll-btn" data-scroll="1" aria-label="Scroll down"><i class="bi bi-chevron-down"></i></button>
+                        </div>
+                    </div>
                     <input type="hidden" name="site_id" id="pms_site_id" value="{{ $selectedSiteId }}">
-                    <datalist id="pms-site-options"></datalist>
                     <div id="pms-site-hint" class="form-text text-warning d-none">Select a site from the list.</div>
                     @error('site_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 @endif
@@ -55,6 +70,16 @@
         <hr class="my-2">
 
         <div class="row g-2 align-items-end">
+            <div class="col-md-7">
+                <label class="form-label mb-0">Unit No. @if(!$readOnly)<span class="required-mark">*</span>@endif</label>
+                @if($readOnly)
+                    <div class="small">{{ $pms->unit_number }}</div>
+                @else
+                    <input name="unit_number" id="pms_unit_number" list="pms-unit-numbers" class="form-control form-control-sm @error('unit_number') is-invalid @enderror" value="{{ old('unit_number', $pms->unit_number) }}" autocomplete="off" required>
+                    <datalist id="pms-unit-numbers"></datalist>
+                    @error('unit_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @endif
+            </div>
             <div class="col-md-5">
                 <label class="form-label mb-0">MHE Type @if(!$readOnly)<span class="required-mark">*</span>@endif</label>
                 @if($readOnly)
@@ -66,16 +91,6 @@
                             <option value="{{ $mheType->id }}" @selected(old('mhe_type_id', $pms->mhe_type_id) == $mheType->id)>{{ $mheType->code }} — {{ $mheType->description }}</option>
                         @endforeach
                     </select>
-                @endif
-            </div>
-            <div class="col-md-7">
-                <label class="form-label mb-0">Unit No. @if(!$readOnly)<span class="required-mark">*</span>@endif</label>
-                @if($readOnly)
-                    <div class="small">{{ $pms->unit_number }}</div>
-                @else
-                    <input name="unit_number" id="pms_unit_number" list="pms-unit-numbers" class="form-control form-control-sm @error('unit_number') is-invalid @enderror" value="{{ old('unit_number', $pms->unit_number) }}" autocomplete="off" required>
-                    <datalist id="pms-unit-numbers"></datalist>
-                    @error('unit_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 @endif
             </div>
         </div>
@@ -165,7 +180,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const siteSearch = document.getElementById('pms_site_search');
     const siteIdInput = document.getElementById('pms_site_id');
-    const siteDatalist = document.getElementById('pms-site-options');
+    const siteMenu = document.getElementById('pms-site-options');
+    const siteMenuList = document.getElementById('pms-site-options-list');
+    const siteToggle = document.getElementById('pms-site-options-toggle');
     const siteHint = document.getElementById('pms-site-hint');
     const typeSelect = document.getElementById('pms_mhe_type_id');
     const unitInput = document.getElementById('pms_unit_number');
@@ -178,7 +195,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let siteDebounceTimer = null;
+    let selectedSiteLabel = siteSearch.value.trim();
     let unitDebounceTimer = null;
+    let loadedUnits = [];
+
+    const bareUnitQuery = (value) => {
+        const trimmed = value.trim();
+        const match = trimmed.match(/^(.*)\s+\([^)]*\)$/);
+
+        return match ? match[1].trim() : trimmed;
+    };
+
+    const escapeAttr = (value) => String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;');
 
     const resolveSite = async () => {
         const term = siteSearch.value.trim();
@@ -194,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.matched) {
             siteIdInput.value = String(result.id);
             siteSearch.value = result.label;
+            selectedSiteLabel = result.label;
             siteSearch.classList.remove('is-invalid');
             siteHint?.classList.add('d-none');
             return true;
@@ -203,12 +235,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     };
 
+    const closeSiteMenu = () => siteMenu?.classList.remove('is-open');
+
+    const openSiteMenu = () => {
+        if (!siteMenu) return;
+        siteMenu.classList.add('is-open');
+        requestAnimationFrame(() => {
+            const overflows = siteMenuList.scrollHeight > siteMenuList.clientHeight + 1;
+            siteMenu.querySelectorAll('.suggest-scroll-btn').forEach((button) => {
+                button.hidden = !overflows;
+            });
+        });
+    };
+
     const loadSites = async () => {
+        if (!siteMenuList) return;
         const params = new URLSearchParams();
-        if (siteSearch.value) params.set('q', siteSearch.value);
+        const value = siteSearch.value.trim();
+        if (value && value !== selectedSiteLabel) params.set('q', value);
         const response = await fetch(`{{ route('pms.search-sites') }}?${params.toString()}`);
         const sites = await response.json();
-        siteDatalist.innerHTML = sites.map(site => `<option value="${site.label}"></option>`).join('');
+        siteMenuList.innerHTML = sites.length
+            ? sites.map(site => `<button type="button" class="suggest-menu-item" data-label="${escapeAttr(site.label)}">${escapeAttr(site.label)}</button>`).join('')
+            : '<div class="suggest-menu-empty">No sites found</div>';
+        openSiteMenu();
     };
 
     const loadUnits = async () => {
@@ -216,19 +266,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const siteId = siteIdInput.value;
         if (!siteId) {
             unitDatalist.innerHTML = '';
+            loadedUnits = [];
             return;
         }
         const params = new URLSearchParams({ site_id: siteId });
-        if (typeSelect?.value) params.set('mhe_type_id', typeSelect.value);
-        if (unitInput.value) params.set('q', unitInput.value);
+        const query = bareUnitQuery(unitInput.value);
+        if (query) params.set('q', query);
         const response = await fetch(`{{ route('pms.search-units') }}?${params.toString()}`);
         const units = await response.json();
-        unitDatalist.innerHTML = units.map(unit => `<option value="${unit.unit_no}"></option>`).join('');
+        loadedUnits = units;
+        unitDatalist.innerHTML = units.map(unit => `<option value="${escapeAttr(unit.label || unit.unit_no)}"></option>`).join('');
+    };
+
+    const applyUnitSelection = () => {
+        const raw = unitInput.value.trim();
+        if (!raw) {
+            return false;
+        }
+
+        const bare = bareUnitQuery(raw);
+        const match = loadedUnits.find(unit =>
+            unit.label === raw || unit.unit_no === raw || unit.unit_no === bare
+        );
+
+        if (!match) {
+            return false;
+        }
+
+        unitInput.value = match.unit_no ?? '';
+        if (match.mhe_type_id && typeSelect) {
+            typeSelect.value = String(match.mhe_type_id);
+        }
+        if (match.supplier_id && supplierSelect) {
+            supplierSelect.value = String(match.supplier_id);
+        }
+
+        return true;
     };
 
     const lookupUnit = async () => {
+        applyUnitSelection();
+
         const siteId = siteIdInput.value;
-        const unitNumber = unitInput.value.trim();
+        const unitNumber = bareUnitQuery(unitInput.value);
+        if (unitNumber !== unitInput.value.trim()) {
+            unitInput.value = unitNumber;
+        }
         if (!siteId || !unitNumber) {
             return;
         }
@@ -259,6 +342,32 @@ document.addEventListener('DOMContentLoaded', () => {
         return resolved;
     };
 
+    siteMenu?.addEventListener('mousedown', (event) => event.preventDefault());
+    siteToggle?.addEventListener('mousedown', (event) => event.preventDefault());
+
+    siteMenuList?.addEventListener('click', (event) => {
+        const item = event.target.closest('.suggest-menu-item');
+        if (!item) return;
+        siteSearch.value = item.dataset.label;
+        selectedSiteLabel = item.dataset.label;
+        closeSiteMenu();
+        onSiteResolved();
+    });
+
+    siteMenu?.querySelectorAll('[data-scroll]').forEach((button) => {
+        button.addEventListener('click', () => {
+            siteMenuList?.scrollBy({ top: Number(button.dataset.scroll) * 72, behavior: 'smooth' });
+        });
+    });
+
+    siteToggle?.addEventListener('click', () => {
+        if (siteMenu?.classList.contains('is-open')) {
+            closeSiteMenu();
+            return;
+        }
+        loadSites();
+    });
+
     siteSearch.addEventListener('input', () => {
         clearTimeout(siteDebounceTimer);
         siteDebounceTimer = setTimeout(loadSites, 250);
@@ -268,16 +377,12 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSites();
     });
 
-    siteSearch.addEventListener('change', () => {
-        onSiteResolved();
-    });
-
     siteSearch.addEventListener('blur', () => {
+        closeSiteMenu();
         onSiteResolved();
     });
 
     typeSelect?.addEventListener('change', () => {
-        loadUnits();
         lookupUnit();
     });
 

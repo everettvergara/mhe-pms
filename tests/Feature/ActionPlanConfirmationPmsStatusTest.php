@@ -9,10 +9,10 @@ use App\Enums\RecordStatus;
 use App\Models\ActionPlan;
 use App\Models\ChecklistGroup;
 use App\Models\ChecklistItem;
+use App\Models\District;
 use App\Models\MheType;
 use App\Models\PmsDetail;
 use App\Models\PmsHeader;
-use App\Models\District;
 use App\Models\Site;
 use App\Models\Supplier;
 use App\Models\User;
@@ -73,7 +73,7 @@ class ActionPlanConfirmationPmsStatusTest extends TestCase
         $actionPlan = $this->createActionPlanOnPms(PmsStatus::Draft);
 
         $this->actingAs($this->adminUser)
-            ->get(route('action-plan-confirmations.index'))
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertDontSee($actionPlan->action_plan_no);
     }
@@ -90,7 +90,7 @@ class ActionPlanConfirmationPmsStatusTest extends TestCase
         ]);
 
         $this->actingAs($this->adminUser)
-            ->get(route('action-plan-confirmations.index'))
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertSee($actionPlan->action_plan_no);
     }
@@ -105,7 +105,7 @@ class ActionPlanConfirmationPmsStatusTest extends TestCase
             ->assertRedirect(route('pms.show', $pms));
 
         $this->actingAs($this->adminUser)
-            ->get(route('action-plan-confirmations.index'))
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertDontSee($actionPlan->action_plan_no);
     }
@@ -139,11 +139,118 @@ class ActionPlanConfirmationPmsStatusTest extends TestCase
         $actionPlan = $this->createActionPlanOnPms(PmsStatus::Draft, ActionPlanStatus::Pending);
 
         $this->actingAs($this->supplierUser)
-            ->post(route('action-plans.mark-implemented', $actionPlan))
+            ->post(route('action-plans.mark-implemented', $actionPlan), [
+                'unit_safe_guaranteed' => '1',
+            ])
             ->assertRedirect()
             ->assertSessionHas('error');
 
         $this->assertSame(ActionPlanStatus::Pending, $actionPlan->fresh()->status);
+    }
+
+    public function test_mark_implemented_requires_unit_safety_guarantee(): void
+    {
+        $actionPlan = $this->createActionPlanOnPms(PmsStatus::WithFindings, ActionPlanStatus::Pending);
+
+        $this->actingAs($this->supplierUser)
+            ->post(route('action-plans.mark-implemented', $actionPlan))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $fresh = $actionPlan->fresh();
+        $this->assertSame(ActionPlanStatus::Pending, $fresh->status);
+        $this->assertFalse($fresh->unit_safe_guaranteed);
+    }
+
+    public function test_implemented_comment_records_unit_safety_guarantee_and_listings_show_it(): void
+    {
+        $actionPlan = $this->createActionPlanOnPms(PmsStatus::WithFindings, ActionPlanStatus::Pending);
+
+        $this->actingAs($this->supplierUser)
+            ->post(route('action-plans.comment', $actionPlan), [
+                'comment' => 'Still working',
+                'progress_status' => 'Pending',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame(ActionPlanStatus::Pending, $actionPlan->fresh()->status);
+
+        $this->actingAs($this->supplierUser)
+            ->from(route('action-plans.show', $actionPlan))
+            ->post(route('action-plans.comment', $actionPlan), [
+                'comment' => 'Work finished',
+                'progress_status' => 'Implemented',
+            ])
+            ->assertRedirect(route('action-plans.show', $actionPlan))
+            ->assertSessionHasErrors('unit_safe_guaranteed');
+
+        $this->assertSame(ActionPlanStatus::Pending, $actionPlan->fresh()->status);
+        $this->assertSame(1, $actionPlan->comments()->count());
+
+        $this->actingAs($this->supplierUser)
+            ->post(route('action-plans.comment', $actionPlan), [
+                'comment' => 'Work finished',
+                'progress_status' => 'Implemented',
+                'unit_safe_guaranteed' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $actionPlan->refresh();
+        $this->assertSame(ActionPlanStatus::WaitingForFastConfirmation, $actionPlan->status);
+        $this->assertTrue($actionPlan->unit_safe_guaranteed);
+        $this->assertSame($this->supplierUser->id, $actionPlan->unit_safe_guaranteed_by);
+        $this->assertNotNull($actionPlan->unit_safe_guaranteed_at);
+
+        $pms = $actionPlan->pmsDetail->pmsHeader;
+
+        $supplierList = $this->actingAs($this->supplierUser)
+            ->get(route('pms.show', $pms));
+        $supplierList->assertOk()->assertSee('Unit safe')->assertSee($actionPlan->action_plan_no);
+        $this->assertUnitSafeCheckboxChecked($supplierList->getContent());
+
+        $adminList = $this->actingAs($this->adminUser)
+            ->get(route('pms.show', ['pms' => $pms, 'action_plan' => $actionPlan->id]));
+        $adminList->assertOk()->assertSee('Unit safe')->assertSee($actionPlan->action_plan_no);
+        $adminList->assertSee('data-ap-action="detail"', false);
+        $adminList->assertSee('id="action-plan-deeplink"', false);
+        $adminList->assertSee(route('action-plan-confirmations.confirm', $actionPlan), false);
+        $this->assertUnitSafeCheckboxChecked($adminList->getContent());
+
+        $this->actingAs($this->adminUser)
+            ->get(route('action-plan-confirmations.show', $actionPlan))
+            ->assertRedirect($actionPlan->parentShowUrl());
+    }
+
+    public function test_rejecting_action_plan_clears_unit_safety_guarantee(): void
+    {
+        $actionPlan = $this->createActionPlanOnPms(PmsStatus::WithFindings, ActionPlanStatus::WaitingForFastConfirmation);
+        $actionPlan->update([
+            'unit_safe_guaranteed' => true,
+            'unit_safe_guaranteed_by' => $this->supplierUser->id,
+            'unit_safe_guaranteed_at' => now(),
+        ]);
+
+        $this->actingAs($this->adminUser)
+            ->post(route('action-plan-confirmations.reject', $actionPlan), [
+                'rejection_remarks' => 'Not safe yet',
+            ])
+            ->assertRedirect();
+
+        $actionPlan->refresh();
+        $this->assertSame(ActionPlanStatus::Rejected, $actionPlan->status);
+        $this->assertFalse($actionPlan->unit_safe_guaranteed);
+        $this->assertNull($actionPlan->unit_safe_guaranteed_by);
+        $this->assertNull($actionPlan->unit_safe_guaranteed_at);
+    }
+
+    protected function assertUnitSafeCheckboxChecked(string $html): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/checked(?:\s[^>]*)?\saria-label="I guarantee that the unit is safe to use"/',
+            $html,
+        );
     }
 
     protected function createActionPlanOnPms(

@@ -148,7 +148,7 @@ class ActionPlanService
         });
     }
 
-    public function markImplemented(User $user, ActionPlan $actionPlan): ActionPlan
+    public function markImplemented(User $user, ActionPlan $actionPlan, bool $unitSafeGuaranteed): ActionPlan
     {
         $actionPlan->loadMissing('pmsDetail.pmsHeader');
         $this->assertSupplierOwnership($user, $actionPlan->pmsDetail);
@@ -163,9 +163,16 @@ class ActionPlanService
             throw new RuntimeException('Action plans can only be marked as implemented after the PMS is finalized.');
         }
 
+        if (! $unitSafeGuaranteed) {
+            throw new RuntimeException('You must guarantee that the unit is safe to use.');
+        }
+
         return DB::transaction(function () use ($user, $actionPlan) {
             $actionPlan->update([
                 'status' => ActionPlanStatus::WaitingForFastConfirmation,
+                'unit_safe_guaranteed' => true,
+                'unit_safe_guaranteed_by' => $user->id,
+                'unit_safe_guaranteed_at' => now(),
                 'updated_by' => $user->id,
             ]);
 
@@ -251,6 +258,9 @@ class ActionPlanService
                 'rejected_by' => $user->id,
                 'rejected_at' => now(),
                 'rejection_remarks' => $rejectionRemarks,
+                'unit_safe_guaranteed' => false,
+                'unit_safe_guaranteed_by' => null,
+                'unit_safe_guaranteed_at' => null,
                 'updated_by' => $user->id,
             ]);
 

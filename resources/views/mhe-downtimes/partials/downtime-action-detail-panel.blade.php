@@ -82,5 +82,31 @@
                 </form>
             @endif
         </div>
+
+        @if(auth()->user()->can('confirm', $plan) && $plan->status === \App\Enums\DowntimeActionPlanStatus::WaitingForFastConfirmation)
+            <div class="d-flex flex-wrap gap-2 mt-3 align-items-end">
+                <form method="POST" action="{{ route('mhe-downtime-action-plan-confirmations.confirm', $plan) }}" class="d-flex flex-wrap gap-2 align-items-end" onsubmit="return confirm('Confirm this action item?')">
+                    @csrf
+                    <div>
+                        <label class="form-label mb-0 small" for="date_implemented_{{ $plan->id }}">Implemented at</label>
+                        <input type="datetime-local"
+                               name="date_implemented"
+                               id="date_implemented_{{ $plan->id }}"
+                               class="form-control form-control-sm @error('date_implemented') is-invalid @enderror"
+                               value="{{ old('date_implemented', $plan->date_implemented?->format('Y-m-d\TH:i')) }}"
+                               required>
+                        @error('date_implemented')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <button class="btn btn-sm btn-success">Confirm</button>
+                </form>
+                <form method="POST" action="{{ route('mhe-downtime-action-plan-confirmations.reject', $plan) }}" class="flex-grow-1" style="max-width:500px" onsubmit="return confirm('Reject this action item?')">
+                    @csrf
+                    <div class="input-group">
+                        <textarea name="rejection_remarks" class="form-control form-control-sm" rows="1" placeholder="Rejection remarks (required)" required></textarea>
+                        <button class="btn btn-sm btn-danger">Reject</button>
+                    </div>
+                </form>
+            </div>
+        @endif
     </div>
 </div>

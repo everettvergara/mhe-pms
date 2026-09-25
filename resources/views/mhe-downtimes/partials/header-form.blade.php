@@ -3,6 +3,13 @@
     $canEditDatetimeFields = ($canEdit ?? false) || ($canEditTimes ?? false);
     $now = now()->format('Y-m-d\TH:i');
     $selectedSiteId = old('site_id', $downtime->site_id);
+    if ($isNew && blank($selectedSiteId)) {
+        $assignedSites = $sites ?? collect();
+        $onlySite = $assignedSites->count() === 1 ? $assignedSites->first() : null;
+        if ($onlySite?->status === \App\Enums\RecordStatus::Active) {
+            $selectedSiteId = $onlySite->id;
+        }
+    }
     $selectedSite = ($sites ?? collect())->firstWhere('id', (int) $selectedSiteId) ?? $downtime->site;
     $siteLabel = $selectedSite
         ? $selectedSite->site_name.' ('.$selectedSite->site_code.')'
@@ -15,16 +22,24 @@
         <div class="row g-2 align-items-end">
             <div class="col-12">
                 <label class="form-label mb-0">Site <span class="required-mark" id="site-required-mark">*</span></label>
-                <input type="text"
-                       id="site_search"
-                       list="site-options"
-                       class="form-control @error('site_id') is-invalid @enderror"
-                       value="{{ old('site_search', $siteLabel) }}"
-                       autocomplete="off"
-                       @disabled(!$canEditHeader)
-                       @if($canEditHeader) required @endif>
+                <div class="suggest-field">
+                    <input type="text"
+                           id="site_search"
+                           class="form-control suggest-field-input @error('site_id') is-invalid @enderror"
+                           value="{{ old('site_search', $siteLabel) }}"
+                           autocomplete="off"
+                           @disabled(!$canEditHeader)
+                           @if($canEditHeader) required @endif>
+                    <button type="button" class="suggest-field-toggle" id="site-options-toggle" aria-label="Show sites" @disabled(!$canEditHeader)>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div id="site-options" class="suggest-menu">
+                        <button type="button" class="suggest-scroll-btn" data-scroll="-1" aria-label="Scroll up"><i class="bi bi-chevron-up"></i></button>
+                        <div id="site-options-list" class="suggest-menu-list"></div>
+                        <button type="button" class="suggest-scroll-btn" data-scroll="1" aria-label="Scroll down"><i class="bi bi-chevron-down"></i></button>
+                    </div>
+                </div>
                 <input type="hidden" name="site_id" id="site_id" value="{{ $selectedSiteId }}">
-                <datalist id="site-options"></datalist>
                 <div id="site-hint" class="form-text text-warning d-none">Select a site from the list.</div>
                 @error('site_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
             </div>
@@ -33,17 +48,16 @@
         <hr class="my-2">
 
         <div class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label mb-0">Supplier <span class="required-mark d-none" id="supplier-required-mark">*</span></label>
-                <select name="supplier_id" id="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror" @disabled(!$canEditHeader)>
-                    <option value="">Select supplier</option>
-                    @foreach($suppliers ?? [] as $supplier)
-                        <option value="{{ $supplier->id }}" @selected((int) $defaultSupplierId === (int) $supplier->id)>{{ $supplier->supplier_name }}</option>
-                    @endforeach
+            <div class="col-12">
+                <label class="form-label mb-0">Ref Unit No.</label>
+                <select name="ref_unit_no" id="ref_unit_no" class="form-select @error('ref_unit_no') is-invalid @enderror" data-selected="{{ old('ref_unit_no', $downtime->ref_unit_no) }}" @disabled(!$canEditHeader)>
+                    <option value="">Select unit</option>
                 </select>
-                @error('supplier_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @error('ref_unit_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="col-md-4">
+        </div>
+        <div class="row g-2 align-items-end mt-1">
+            <div class="col-md-6">
                 <label class="form-label mb-0">MHE Type <span class="required-mark">*</span></label>
                 <select name="mhe_type_id" id="mhe_type_id" class="form-select @error('mhe_type_id') is-invalid @enderror" @disabled(!$canEditHeader) required>
                     <option value="">Select type</option>
@@ -53,11 +67,15 @@
                 </select>
                 @error('mhe_type_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="col-md-4">
-                <label class="form-label mb-0">Ref Unit No.</label>
-                <input name="ref_unit_no" id="ref_unit_no" list="unit-numbers" class="form-control @error('ref_unit_no') is-invalid @enderror" value="{{ old('ref_unit_no', $downtime->ref_unit_no) }}" @disabled(!$canEditHeader) autocomplete="off">
-                <datalist id="unit-numbers"></datalist>
-                @error('ref_unit_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <div class="col-md-6">
+                <label class="form-label mb-0">Supplier <span class="required-mark d-none" id="supplier-required-mark">*</span></label>
+                <select name="supplier_id" id="supplier_id" class="form-select @error('supplier_id') is-invalid @enderror" @disabled(!$canEditHeader)>
+                    <option value="">Select supplier</option>
+                    @foreach($suppliers ?? [] as $supplier)
+                        <option value="{{ $supplier->id }}" @selected((int) $defaultSupplierId === (int) $supplier->id)>{{ $supplier->supplier_name }}</option>
+                    @endforeach
+                </select>
+                @error('supplier_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
         </div>
 
@@ -91,7 +109,7 @@
             </div>
         </div>
 
-        <div class="row g-2 align-items-end mt-1">
+        <div class="row g-2 align-items-start mt-1">
             <div class="col-md-4">
                 <label class="form-label mb-0">When From <span class="required-mark">*</span></label>
                 <input type="datetime-local" id="date_of_incident" name="date_of_incident" class="form-control @error('date_of_incident') is-invalid @enderror"
@@ -101,14 +119,15 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label mb-0">When To</label>
-                <input type="datetime-local" id="uptime" name="uptime" class="form-control @error('uptime') is-invalid @enderror"
-                       value="{{ old('uptime', optional($downtime->uptime)->format('Y-m-d\TH:i') ?: ($isNew ? $now : '')) }}"
-                       @disabled(!$canEditDatetimeFields)>
-                @error('uptime')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <input type="datetime-local" id="uptime" class="form-control"
+                       value="{{ optional($downtime->uptime)->format('Y-m-d\TH:i') }}"
+                       disabled>
+                <div class="form-text text-danger">Automatically updated when implemented by supplier</div>
             </div>
             <div class="col-md-4">
                 <label class="form-label mb-0">Hours Down</label>
                 <input id="hours_down" class="form-control" value="{{ old('hours_down', $downtime->hours_down) }}" disabled>
+                <div class="form-text text-danger">Automatically updated when implemented by supplier</div>
             </div>
         </div>
 
@@ -168,11 +187,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const siteSearch = document.getElementById('site_search');
     const siteIdInput = document.getElementById('site_id');
-    const siteDatalist = document.getElementById('site-options');
+    const siteMenu = document.getElementById('site-options');
+    const siteMenuList = document.getElementById('site-options-list');
+    const siteToggle = document.getElementById('site-options-toggle');
     const siteHint = document.getElementById('site-hint');
     const typeSelect = document.getElementById('mhe_type_id');
-    const unitInput = document.getElementById('ref_unit_no');
-    const unitDatalist = document.getElementById('unit-numbers');
+    const unitSelect = document.getElementById('ref_unit_no');
     const supplierSelect = document.getElementById('supplier_id');
     const supplierRequiredMark = document.getElementById('supplier-required-mark');
     const dateFromInput = document.getElementById('date_of_incident');
@@ -180,13 +200,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const hoursDownInput = document.getElementById('hours_down');
     const downtimeForm = document.getElementById('downtime-form');
 
-    if (!siteSearch || !siteIdInput || !unitInput) {
+    if (!siteSearch || !siteIdInput || !unitSelect) {
         return;
     }
 
     const siteMap = new Map();
     let siteDebounceTimer = null;
-    let unitDebounceTimer = null;
+    let selectedSiteLabel = siteSearch.value.trim();
+    let loadedUnits = [];
+    let unitsLoadedOnce = false;
+
+    const escapeAttr = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;');
+
+    const unitOptionLabel = (unit) => {
+        let label = `(${unit.unit_no})`;
+        if (unit.mhe_type_label) {
+            label += ` ${unit.mhe_type_label}`;
+        }
+        if (unit.supplier_name) {
+            label += ` — ${unit.supplier_name}`;
+        }
+        return label;
+    };
 
     const resolveSite = async () => {
         const term = siteSearch.value.trim();
@@ -202,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.matched) {
             siteIdInput.value = String(result.id);
             siteSearch.value = result.label;
+            selectedSiteLabel = result.label;
             siteSearch.classList.remove('is-invalid');
             siteHint?.classList.add('d-none');
             return true;
@@ -220,13 +259,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const applyInventoryMatch = (matched, supplierId = null) => {
-        if (!supplierSelect) return;
+    const applyInventoryMatch = (matched, supplierId = null, mheTypeId = null) => {
         const headerEditable = !siteSearch.disabled;
         if (!headerEditable) {
-            supplierSelect.disabled = true;
+            if (supplierSelect) {
+                supplierSelect.disabled = true;
+            }
             return;
         }
+        if (matched && mheTypeId && typeSelect) {
+            typeSelect.value = String(mheTypeId);
+        }
+        if (!supplierSelect) return;
         if (matched) {
             if (supplierId) {
                 supplierSelect.value = String(supplierId);
@@ -255,16 +299,34 @@ document.addEventListener('DOMContentLoaded', () => {
         hoursDownInput.value = (Math.round((diffMs / 3600000) * 100) / 100).toFixed(2);
     };
 
+    const closeSiteMenu = () => siteMenu?.classList.remove('is-open');
+
+    const openSiteMenu = () => {
+        if (!siteMenu || siteSearch.disabled) return;
+        siteMenu.classList.add('is-open');
+        requestAnimationFrame(() => {
+            const overflows = siteMenuList.scrollHeight > siteMenuList.clientHeight + 1;
+            siteMenu.querySelectorAll('.suggest-scroll-btn').forEach((button) => {
+                button.hidden = !overflows;
+            });
+        });
+    };
+
     const loadSites = async () => {
+        if (!siteMenuList || siteSearch.disabled) return;
         const params = new URLSearchParams();
-        if (siteSearch.value) params.set('q', siteSearch.value);
+        const value = siteSearch.value.trim();
+        if (value && value !== selectedSiteLabel) params.set('q', value);
         const response = await fetch(`{{ route('mhe-downtimes.search-sites') }}?${params.toString()}`);
         const sites = await response.json();
         siteMap.clear();
-        siteDatalist.innerHTML = sites.map(site => {
-            siteMap.set(site.label, String(site.id));
-            return `<option value="${site.label}"></option>`;
-        }).join('');
+        siteMenuList.innerHTML = sites.length
+            ? sites.map(site => {
+                siteMap.set(site.label, String(site.id));
+                return `<button type="button" class="suggest-menu-item" data-label="${escapeAttr(site.label)}">${escapeAttr(site.label)}</button>`;
+            }).join('')
+            : '<div class="suggest-menu-empty">No sites found</div>';
+        openSiteMenu();
     };
 
     const onSiteResolved = async () => {
@@ -277,23 +339,39 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadUnits = async () => {
-        if (!unitDatalist) return;
         const siteId = siteIdInput.value;
+        const selected = unitsLoadedOnce ? unitSelect.value : (unitSelect.dataset.selected || '');
         if (!siteId) {
-            unitDatalist.innerHTML = '';
+            unitSelect.innerHTML = '<option value="">Select unit</option>';
+            loadedUnits = [];
+            unitsLoadedOnce = true;
             return;
         }
-        const params = new URLSearchParams({ site_id: siteId });
-        if (typeSelect?.value) params.set('mhe_type_id', typeSelect.value);
-        if (unitInput.value) params.set('q', unitInput.value);
+        const params = new URLSearchParams({ site_id: siteId, all: '1' });
         const response = await fetch(`{{ route('mhe-downtimes.search-units') }}?${params.toString()}`);
         const units = await response.json();
-        unitDatalist.innerHTML = units.map(unit => `<option value="${unit.unit_no}"></option>`).join('');
+        loadedUnits = units;
+        const seen = new Set();
+        const options = ['<option value="">Select unit</option>'];
+        units.forEach(unit => {
+            const unitNo = String(unit.unit_no ?? '');
+            if (!unitNo || seen.has(unitNo)) return;
+            seen.add(unitNo);
+            const selectedAttr = unitNo === selected ? ' selected' : '';
+            options.push(
+                `<option value="${escapeAttr(unitNo)}" data-mhe-type-id="${escapeAttr(unit.mhe_type_id ?? '')}" data-supplier-id="${escapeAttr(unit.supplier_id ?? '')}"${selectedAttr}>${escapeAttr(unitOptionLabel(unit))}</option>`
+            );
+        });
+        if (selected && !seen.has(selected)) {
+            options.push(`<option value="${escapeAttr(selected)}" selected>${escapeAttr(selected)}</option>`);
+        }
+        unitSelect.innerHTML = options.join('');
+        unitsLoadedOnce = true;
     };
 
     const lookupUnit = async () => {
         const siteId = siteIdInput.value;
-        const refUnitNo = unitInput.value.trim();
+        const refUnitNo = unitSelect.value.trim();
         if (!siteId) {
             return;
         }
@@ -307,8 +385,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams({ site_id: siteId, ref_unit_no: refUnitNo });
         const response = await fetch(`{{ route('mhe-downtimes.lookup-unit') }}?${params.toString()}`);
         const result = await response.json();
-        applyInventoryMatch(result.matched, result.supplier_id);
+        applyInventoryMatch(result.matched, result.supplier_id, result.mhe_type_id);
     };
+
+    siteMenu?.addEventListener('mousedown', (event) => event.preventDefault());
+    siteToggle?.addEventListener('mousedown', (event) => event.preventDefault());
+
+    siteMenuList?.addEventListener('click', (event) => {
+        const item = event.target.closest('.suggest-menu-item');
+        if (!item) return;
+        siteSearch.value = item.dataset.label;
+        selectedSiteLabel = item.dataset.label;
+        closeSiteMenu();
+        onSiteResolved();
+    });
+
+    siteMenu?.querySelectorAll('[data-scroll]').forEach((button) => {
+        button.addEventListener('click', () => {
+            siteMenuList?.scrollBy({ top: Number(button.dataset.scroll) * 72, behavior: 'smooth' });
+        });
+    });
+
+    siteToggle?.addEventListener('click', () => {
+        if (siteMenu?.classList.contains('is-open')) {
+            closeSiteMenu();
+            return;
+        }
+        loadSites();
+    });
 
     siteSearch.addEventListener('input', () => {
         clearTimeout(siteDebounceTimer);
@@ -319,39 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSites();
     });
 
-    siteSearch.addEventListener('change', () => {
-        onSiteResolved();
-    });
-
     siteSearch.addEventListener('blur', () => {
+        closeSiteMenu();
         onSiteResolved();
     });
 
-    typeSelect?.addEventListener('change', () => {
-        loadUnits();
-        lookupUnit();
-    });
-
-    unitInput.addEventListener('focus', async () => {
-        const resolved = await resolveSite();
-        if (!resolved) {
-            siteHint?.classList.remove('d-none');
-            siteSearch.focus();
-            return;
-        }
-        loadUnits();
-    });
-
-    unitInput.addEventListener('input', () => {
-        clearTimeout(unitDebounceTimer);
-        unitDebounceTimer = setTimeout(() => {
-            loadUnits();
-            lookupUnit();
-        }, 250);
-    });
-
-    unitInput.addEventListener('change', lookupUnit);
-    unitInput.addEventListener('blur', lookupUnit);
+    unitSelect.addEventListener('change', lookupUnit);
 
     [dateFromInput, dateToInput].forEach((input) => {
         input?.addEventListener('change', updateHoursDown);
@@ -375,6 +452,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         siteSearch.classList.remove('is-invalid');
         siteHint?.classList.add('d-none');
+        if (supplierSelect) {
+            supplierSelect.disabled = false;
+        }
 
         const formData = new FormData(downtimeForm);
         const submitter = event.submitter;

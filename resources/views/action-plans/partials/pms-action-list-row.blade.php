@@ -13,6 +13,7 @@
     <td class="small">{{ $plan->responsible_person }}</td>
     <td class="small text-nowrap">{{ $plan->timeline_from?->format('Y-m-d') }} – {{ $plan->timeline_to?->format('Y-m-d') }}</td>
     <td><x-status-badge :status="$plan->status" /></td>
+    <td><x-unit-safe-checkbox :checked="$plan->unit_safe_guaranteed" /></td>
     <td class="text-nowrap">
         @if($canEdit)
             <button
@@ -43,17 +44,16 @@
                 </button>
             </form>
         @endif
-        @if(!$pmsIsDraft && $canManageActionPlans)
-            <button
-                type="button"
-                class="btn btn-link btn-sm p-0"
-                title="Update status"
-                data-ap-action="detail"
-                data-plan-id="{{ $plan->id }}"
-                data-item-label="{{ $itemLabel }}"
-            >
-                <i class="bi bi-arrow-repeat"></i>
-            </button>
-        @endif
+        <button
+            type="button"
+            class="btn btn-link btn-sm p-0"
+            title="{{ (!$pmsIsDraft && $canManageActionPlans) ? 'Update status' : 'View' }}"
+            data-ap-action="detail"
+            data-plan-id="{{ $plan->id }}"
+            data-pms-detail-id="{{ $pmsDetail->id }}"
+            data-item-label="{{ $itemLabel }}"
+        >
+            <i class="bi {{ (!$pmsIsDraft && $canManageActionPlans) ? 'bi-arrow-repeat' : 'bi-eye' }}"></i>
+        </button>
     </td>
 </tr>

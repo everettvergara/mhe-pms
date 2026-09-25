@@ -4,15 +4,16 @@ namespace Tests\Feature;
 
 use App\Enums\ActionPlanStatus;
 use App\Enums\ChecklistAnswer;
-use App\Enums\DowntimeActionPlanStatus;
 use App\Enums\DowntimeStatus;
 use App\Enums\PmsStatus;
 use App\Enums\RecordStatus;
+use App\Models\ActionPlan;
 use App\Models\ChecklistGroup;
 use App\Models\ChecklistItem;
 use App\Models\District;
 use App\Models\MheCategory;
 use App\Models\MheDowntime;
+use App\Models\MheDowntimeActionPlan;
 use App\Models\MheType;
 use App\Models\PmsDetail;
 use App\Models\PmsHeader;
@@ -130,8 +131,14 @@ class WorkflowNotificationTest extends TestCase
         $actionPlan = $this->createSubmittedPmsActionPlan(ActionPlanStatus::Pending);
 
         $this->actingAs($this->supplierUser)
-            ->post(route('action-plans.mark-implemented', $actionPlan))
+            ->post(route('action-plans.mark-implemented', $actionPlan), [
+                'unit_safe_guaranteed' => '1',
+            ])
             ->assertRedirect();
+
+        $actionPlan->refresh();
+        $this->assertTrue($actionPlan->unit_safe_guaranteed);
+        $this->assertSame($this->supplierUser->id, $actionPlan->unit_safe_guaranteed_by);
 
         Notification::assertSentTo($this->fastAdmin, PmsActionPlanWorkflowNotification::class);
     }
@@ -144,7 +151,7 @@ class WorkflowNotificationTest extends TestCase
 
         $this->actingAs($this->fastAdmin)
             ->post(route('action-plan-confirmations.confirm', $actionPlan))
-            ->assertRedirect(route('action-plan-confirmations.index'));
+            ->assertRedirect($actionPlan->parentShowUrl());
 
         Notification::assertSentTo($this->supplierUser, PmsActionPlanWorkflowNotification::class);
     }
@@ -159,7 +166,7 @@ class WorkflowNotificationTest extends TestCase
             ->post(route('action-plan-confirmations.reject', $actionPlan), [
                 'rejection_remarks' => 'Incomplete work',
             ])
-            ->assertRedirect(route('action-plan-confirmations.index'));
+            ->assertRedirect($actionPlan->parentShowUrl());
 
         Notification::assertSentTo($this->supplierUser, PmsActionPlanWorkflowNotification::class);
     }
@@ -200,8 +207,10 @@ class WorkflowNotificationTest extends TestCase
         $actionPlan = $this->createWaitingDowntimeActionPlan($downtime);
 
         $this->actingAs($this->fastAdmin)
-            ->post(route('mhe-downtime-action-plan-confirmations.confirm', $actionPlan))
-            ->assertRedirect(route('mhe-downtime-action-plan-confirmations.index'));
+            ->post(route('mhe-downtime-action-plan-confirmations.confirm', $actionPlan), [
+                'date_implemented' => $actionPlan->date_implemented?->format('Y-m-d\TH:i'),
+            ])
+            ->assertRedirect($actionPlan->parentShowUrl());
 
         Notification::assertSentTo($this->supplierUser, DowntimeActionPlanWorkflowNotification::class);
     }
@@ -217,7 +226,7 @@ class WorkflowNotificationTest extends TestCase
             ->post(route('mhe-downtime-action-plan-confirmations.reject', $actionPlan), [
                 'rejection_remarks' => 'Incomplete work',
             ])
-            ->assertRedirect(route('mhe-downtime-action-plan-confirmations.index'));
+            ->assertRedirect($actionPlan->parentShowUrl());
 
         Notification::assertSentTo($this->supplierUser, DowntimeActionPlanWorkflowNotification::class);
     }
@@ -303,7 +312,7 @@ class WorkflowNotificationTest extends TestCase
         ];
     }
 
-    protected function createSubmittedPmsActionPlan(ActionPlanStatus $status): \App\Models\ActionPlan
+    protected function createSubmittedPmsActionPlan(ActionPlanStatus $status): ActionPlan
     {
         $group = ChecklistGroup::query()->create([
             'group_name' => 'General',
@@ -344,7 +353,7 @@ class WorkflowNotificationTest extends TestCase
             'updated_by' => $this->supplierUser->id,
         ]);
 
-        return \App\Models\ActionPlan::query()->create([
+        return ActionPlan::query()->create([
             'action_plan_no' => 'AP-TEST-'.fake()->unique()->numerify('###'),
             'pms_detail_id' => $detail->id,
             'title' => 'Replace brake pads',
@@ -375,7 +384,7 @@ class WorkflowNotificationTest extends TestCase
         ]);
     }
 
-    protected function createWaitingDowntimeActionPlan(MheDowntime $downtime): \App\Models\MheDowntimeActionPlan
+    protected function createWaitingDowntimeActionPlan(MheDowntime $downtime): MheDowntimeActionPlan
     {
         $this->actingAs($this->supplierUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
         $actionPlan = $downtime->actionPlans()->first();

@@ -55,6 +55,13 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label">Availability</label>
+                <select name="filters[currently_down]" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="1" @selected(($state['filters']['currently_down'] ?? '') == '1')>Currently down</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <button class="btn btn-primary btn-sm">Filter</button>
                 <a href="{{ route('mhe-downtimes.index') }}" class="btn btn-secondary btn-sm">Reset</a>
             </div>

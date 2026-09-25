@@ -11,9 +11,11 @@ use App\Models\MheType;
 use App\Models\Site;
 use App\Models\Supplier;
 use App\Services\ActivityLogService;
+use App\Services\UserDataScopeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class MheInventoryController extends Controller
@@ -22,22 +24,30 @@ class MheInventoryController extends Controller
 
     public function __construct(
         protected ActivityLogService $activityLogService,
+        protected UserDataScopeService $userDataScopeService,
     ) {
         $this->authorizeResource(MheInventory::class, 'mhe_inventory');
     }
 
     public function index(Request $request): View
     {
+        $user = $request->user();
         $state = $this->resolveListState($request, 'mhe-inventories', ['sort' => 'unit_no', 'direction' => 'asc']);
 
         $query = MheInventory::query()->with(['siteRelation', 'supplier', 'mheType', 'lastPmsHeader']);
+        $this->userDataScopeService->scopeMheInventory($query, $user);
         $inventories = $this->paginateList($this->applyListQuery($query, $state), $state);
+
+        $sitesQuery = Site::query()->orderBy('site_name');
+        $this->userDataScopeService->scopeSite($sitesQuery, $user);
+        $suppliersQuery = Supplier::query()->orderBy('supplier_name');
+        $this->userDataScopeService->scopeSupplier($suppliersQuery, $user);
 
         return view('mhe-inventories.index', [
             'inventories' => $inventories,
             'state' => $state,
-            'sites' => Site::query()->orderBy('site_name')->get(['id', 'site_code', 'site_name']),
-            'suppliers' => Supplier::query()->orderBy('supplier_name')->get(['id', 'supplier_name']),
+            'sites' => $sitesQuery->get(['id', 'site_code', 'site_name']),
+            'suppliers' => $suppliersQuery->get(['id', 'supplier_name']),
             'mheTypes' => MheType::query()->orderBy('code')->get(['id', 'code', 'description']),
         ]);
     }
@@ -163,7 +173,7 @@ class MheInventoryController extends Controller
     }
 
     /**
-     * @return array{sites: \Illuminate\Support\Collection, suppliers: \Illuminate\Support\Collection, mheTypes: \Illuminate\Support\Collection}
+     * @return array{sites: Collection, suppliers: Collection, mheTypes: Collection}
      */
     private function formOptions(): array
     {

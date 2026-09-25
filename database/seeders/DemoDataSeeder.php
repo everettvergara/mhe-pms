@@ -13,7 +13,6 @@ use App\Models\MheType;
 use App\Models\PmsDetail;
 use App\Models\PmsHeader;
 use App\Models\Site;
-use App\Models\Supplier;
 use App\Models\User;
 use App\Services\ActionPlanService;
 use App\Services\NumberSequenceService;
@@ -105,7 +104,7 @@ class DemoDataSeeder extends Seeder
 
         $actionPlanService->addComment($toyotaUser, $plan, 'Replacement parts ordered.', ProgressStatus::Pending);
         $actionPlanService->addComment($toyotaUser, $plan, 'Component replaced and tested.', ProgressStatus::Implemented);
-        $actionPlanService->markImplemented($toyotaUser, $plan);
+        $actionPlanService->markImplemented($toyotaUser, $plan, true);
     }
 
     private function seedDetails(PmsHeader $header, User $user, ChecklistAnswer $defaultAnswer, ?string $remarks = null): PmsDetail

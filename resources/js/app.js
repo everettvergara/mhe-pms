@@ -1,16 +1,18 @@
 import './bootstrap';
 import './recaptcha';
+import { applyDistrictSiteFilter, initDistrictSiteFilters } from './district-site-filter';
 import { Collapse, Modal } from 'bootstrap';
 import $ from 'jquery';
 import Chart from 'chart.js/auto';
 
 window.$ = window.jQuery = $;
 window.Chart = Chart;
+window.applyDistrictSiteFilter = applyDistrictSiteFilter;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('tr[data-href]').forEach((row) => {
         row.addEventListener('click', (event) => {
-            if (event.target.closest('a, button, input, form, select, textarea, label')) {
+            if (event.target.closest('a, button, input, form, select, textarea, label, [data-unit-safe]')) {
                 return;
             }
 
@@ -35,6 +37,28 @@ document.addEventListener('DOMContentLoaded', () => {
         toggle();
     });
 
+    document.addEventListener('change', (event) => {
+        const select = event.target.closest('[data-progress-status]');
+        if (!select) {
+            return;
+        }
+
+        const form = select.closest('form');
+        const checkbox = form?.querySelector('[data-unit-safe-checkbox]');
+        if (!checkbox) {
+            return;
+        }
+
+        const implementing = select.value === 'Implemented';
+        checkbox.disabled = !implementing;
+        checkbox.required = implementing;
+
+        if (!implementing) {
+            checkbox.checked = false;
+        }
+    });
+
+    initDistrictSiteFilters();
     initPmsActionPlanModals();
     initDowntimeActionPlanModals();
     initPmsDateSync();
@@ -317,6 +341,11 @@ function initDowntimeActionPlanModals() {
         }
     });
 
+    const deeplinkPlanId = document.getElementById('action-plan-deeplink')?.dataset.planId;
+    if (deeplinkPlanId && document.getElementById(`dt-ap-detail-${deeplinkPlanId}`)) {
+        openDetail(deeplinkPlanId, '');
+    }
+
     modalEl.addEventListener('hidden.bs.modal', () => {
         listContainer.innerHTML = '';
         detailContainer.innerHTML = '';
@@ -576,6 +605,11 @@ function initPmsActionPlanModals() {
             openList(currentDetailId, currentItemLabel);
         }
     });
+
+    const deeplinkPlanId = document.getElementById('action-plan-deeplink')?.dataset.planId;
+    if (deeplinkPlanId && document.getElementById(`ap-detail-${deeplinkPlanId}`)) {
+        openDetail(deeplinkPlanId, '');
+    }
 
     modalEl.addEventListener('hidden.bs.modal', () => {
         listContainer.innerHTML = '';

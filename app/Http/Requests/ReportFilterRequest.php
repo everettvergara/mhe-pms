@@ -26,6 +26,7 @@ class ReportFilterRequest extends FormRequest
             'view' => ['nullable', 'string', 'in:table,chart-month-supplier,chart-supplier-site'],
             'mhe_type_id' => ['nullable', 'integer', 'exists:mhe_types,id'],
             'status' => ['nullable', 'string', 'max:50'],
+            'source_type' => ['nullable', 'string', 'in:pms,mhe-downtime'],
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'search' => ['nullable', 'string', 'max:255'],
