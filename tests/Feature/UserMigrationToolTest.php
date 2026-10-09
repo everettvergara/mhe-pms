@@ -37,6 +37,52 @@ class UserMigrationToolTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_page_shows_the_loaded_fsc_connection_and_test_requires_admin(): void
+    {
+        config([
+            'fsc_web_import.mysql.host' => '10.1.2.3',
+            'fsc_web_import.mysql.port' => 3307,
+            'fsc_web_import.mysql.database' => 'live_fsc',
+            'fsc_web_import.mysql.username' => 'fsc_user',
+            'fsc_web_import.mysql.password' => 'secret-pass',
+        ]);
+
+        $admin = User::factory()->create(['username' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('system.user-migration-tool.index'))
+            ->assertOk()
+            ->assertSee('10.1.2.3')
+            ->assertSee('3307')
+            ->assertSee('live_fsc')
+            ->assertSee('fsc_user')
+            ->assertSee('secret-pass')
+            ->assertSee('Test connection');
+
+        $this->actingAs(User::factory()->create(['username' => 'not-admin']))
+            ->post(route('system.user-migration-tool.test-connection'))
+            ->assertForbidden();
+    }
+
+    public function test_test_connection_reports_a_failure(): void
+    {
+        config([
+            'fsc_web_import.mysql.host' => '127.0.0.1',
+            'fsc_web_import.mysql.port' => 1,
+            'fsc_web_import.mysql.database' => 'eagleeyefastlogi_fsc_dashboard',
+            'fsc_web_import.mysql.username' => 'eagleeyefastlogi_user',
+            'fsc_web_import.mysql.password' => 'x',
+        ]);
+
+        $admin = User::factory()->create(['username' => 'admin']);
+
+        $this->actingAs($admin)
+            ->from(route('system.user-migration-tool.index'))
+            ->post(route('system.user-migration-tool.test-connection'))
+            ->assertRedirect(route('system.user-migration-tool.index'))
+            ->assertSessionHas('error');
+    }
+
     public function test_import_requires_a_preview_token(): void
     {
         $admin = User::factory()->create(['username' => 'admin']);

@@ -11,6 +11,28 @@
 </div>
 
 <div class="card mb-3">
+    <div class="card-header">fsc_web connection loaded by the app</div>
+    <div class="card-body">
+        <dl class="row mb-3">
+            <dt class="col-sm-3">FSC_WEB_DB_HOST</dt>
+            <dd class="col-sm-9"><code>{{ $fscConnection['host'] !== null && $fscConnection['host'] !== '' ? $fscConnection['host'] : '(empty)' }}</code></dd>
+            <dt class="col-sm-3">FSC_WEB_DB_PORT</dt>
+            <dd class="col-sm-9"><code>{{ $fscConnection['port'] !== null && $fscConnection['port'] !== '' ? $fscConnection['port'] : '(empty)' }}</code></dd>
+            <dt class="col-sm-3">FSC_WEB_DB_DATABASE</dt>
+            <dd class="col-sm-9"><code>{{ $fscConnection['database'] !== null && $fscConnection['database'] !== '' ? $fscConnection['database'] : '(empty)' }}</code></dd>
+            <dt class="col-sm-3">FSC_WEB_DB_USERNAME</dt>
+            <dd class="col-sm-9"><code>{{ $fscConnection['username'] !== null && $fscConnection['username'] !== '' ? $fscConnection['username'] : '(empty)' }}</code></dd>
+            <dt class="col-sm-3">FSC_WEB_DB_PASSWORD</dt>
+            <dd class="col-sm-9"><code>{{ ($fscConnection['password'] ?? '') !== '' ? $fscConnection['password'] : '(empty)' }}</code></dd>
+        </dl>
+        <form method="POST" action="{{ route('system.user-migration-tool.test-connection') }}">
+            @csrf
+            <button type="submit" class="btn btn-outline-primary btn-sm">Test connection</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
     <div class="card-body">
         <form method="POST" action="{{ route('system.user-migration-tool.preview') }}" class="row g-3">
             @csrf

@@ -20,6 +20,30 @@ class UserMigrationToolController extends Controller
         return view('system.user-migration-tool.index', $this->pageData());
     }
 
+    public function testConnection(): RedirectResponse
+    {
+        $connection = FscWebConnection::configFromEnv();
+
+        try {
+            $pdo = FscWebConnection::connect($connection);
+            $database = (string) $pdo->query('SELECT DATABASE()')->fetchColumn();
+            $districtCount = (int) $pdo->query('SELECT COUNT(*) FROM tb_fin_mf_district WHERE is_active = 1')->fetchColumn();
+        } catch (Throwable $exception) {
+            return back()->with('error', 'fsc_web connection failed: '.$exception->getMessage());
+        }
+
+        return back()->with(
+            'success',
+            sprintf(
+                'Connected to fsc_web at %s:%s. Database "%s" has %d active district(s).',
+                $connection['host'] ?? '',
+                $connection['port'] ?? '',
+                $database,
+                $districtCount,
+            ),
+        );
+    }
+
     public function preview(PreviewUserMigrationRequest $request, FscDistrictUserImportService $importService): View|RedirectResponse
     {
         $connection = FscWebConnection::configFromEnv();
@@ -84,6 +108,7 @@ class UserMigrationToolController extends Controller
                 ->where('status', RecordStatus::Active)
                 ->orderBy('district_code')
                 ->get(['id', 'district_code', 'district_name']),
+            'fscConnection' => FscWebConnection::configFromEnv(),
             'allowDeactivate' => (bool) config('fsc_web_import.allow_source_deactivate'),
             'confirmationPhrase' => config('fsc_web_import.confirmation_phrase'),
             'preview' => null,

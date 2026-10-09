@@ -282,6 +282,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
     Route::middleware('fsc-import-operator')->prefix('system/user-migration-tool')->name('system.user-migration-tool.')->group(function (): void {
         Route::get('/', [UserMigrationToolController::class, 'index'])->name('index');
+        Route::post('/test-connection', [UserMigrationToolController::class, 'testConnection'])->name('test-connection');
         Route::post('/preview', [UserMigrationToolController::class, 'preview'])->name('preview');
         Route::post('/import', [UserMigrationToolController::class, 'import'])->name('import');
     });

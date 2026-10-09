@@ -29,7 +29,10 @@ class FscWebConnection
             ),
             (string) $username,
             (string) ($config['password'] ?? ''),
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_TIMEOUT => 5,
+            ],
         );
     }
 
