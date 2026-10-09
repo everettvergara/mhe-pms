@@ -13,20 +13,19 @@ use App\Http\Controllers\MheDowntimeActionPlanConfirmationController;
 use App\Http\Controllers\MheDowntimeActionPlanController;
 use App\Http\Controllers\MheDowntimeAttachmentController;
 use App\Http\Controllers\MheDowntimeController;
-use App\Http\Controllers\MheDowntimeImportController;
 use App\Http\Controllers\MheDowntimeReportController;
 use App\Http\Controllers\MheInventoryController;
 use App\Http\Controllers\MheTypeController;
 use App\Http\Controllers\MheUptimeDashboardController;
 use App\Http\Controllers\PmsAttachmentController;
 use App\Http\Controllers\PmsController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserMigrationToolController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -218,15 +217,6 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('mhe-downtimes/{mhe_downtime}/action-plans/{action_plan}/attachments', [MheDowntimeAttachmentController::class, 'storeForActionPlan'])->name('mhe-downtimes.action-plans.attachments.store');
     });
 
-    Route::middleware('permission:mhe-downtimes.import')->group(function (): void {
-        Route::get('mhe-downtimes/import', [MheDowntimeImportController::class, 'index'])->name('mhe-downtimes.import.index');
-        Route::get('mhe-downtimes/import/run', [MheDowntimeImportController::class, 'create'])->name('mhe-downtimes.import.create');
-        Route::post('mhe-downtimes/import', [MheDowntimeImportController::class, 'store'])->name('mhe-downtimes.import.store');
-        Route::get('mhe-downtimes/import/{batchId}/progress', [MheDowntimeImportController::class, 'progress'])->name('mhe-downtimes.import.progress');
-        Route::get('mhe-downtimes/import/{batchId}/status', [MheDowntimeImportController::class, 'status'])->name('mhe-downtimes.import.status');
-        Route::get('mhe-downtimes/import/logs/{batchId}', [MheDowntimeImportController::class, 'downloadLog'])->name('mhe-downtimes.import.log');
-    });
-
     Route::middleware('permission:mhe-downtimes.view')->group(function (): void {
         Route::get('mhe-downtimes/{mhe_downtime}', [MheDowntimeController::class, 'show'])->name('mhe-downtimes.show');
     });
@@ -290,10 +280,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('/{activity_log}', [ActivityLogController::class, 'show'])->name('show');
     });
 
+    Route::middleware('fsc-import-operator')->prefix('system/user-migration-tool')->name('system.user-migration-tool.')->group(function (): void {
+        Route::get('/', [UserMigrationToolController::class, 'index'])->name('index');
+        Route::post('/preview', [UserMigrationToolController::class, 'preview'])->name('preview');
+        Route::post('/import', [UserMigrationToolController::class, 'import'])->name('import');
+    });
+
     Route::middleware('permission:profile.manage')->group(function (): void {
-        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
         Route::get('/change-password', [PasswordController::class, 'edit'])->name('password.edit');
     });
 });

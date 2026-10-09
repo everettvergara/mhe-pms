@@ -170,6 +170,7 @@ Each report is listed directly in the sidebar under Reports (no intermediate rep
 
 System
 
+-   User Migration Tool (admin operator only)
 -   Activity Logs
 -   My Profile
 -   Change Password

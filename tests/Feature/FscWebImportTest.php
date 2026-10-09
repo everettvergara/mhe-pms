@@ -3,14 +3,11 @@
 namespace Tests\Feature;
 
 use App\Enums\DowntimeStatus;
-use App\Enums\FscWebImportStatus;
 use App\Enums\MheDowntimeImportSource;
 use App\Enums\RecordStatus;
-use App\Jobs\RunFscWebImportJob;
 use App\Models\District;
 use App\Models\MheCategory;
 use App\Models\MheDowntime;
-use App\Models\MheDowntimeImportBatch;
 use App\Models\MheType;
 use App\Models\Site;
 use App\Models\User;
@@ -20,7 +17,6 @@ use Database\Seeders\EagleEyeImportDefaultSeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class FscWebImportTest extends TestCase
@@ -65,75 +61,33 @@ class FscWebImportTest extends TestCase
         $this->seed(EagleEyeImportDefaultSeeder::class);
     }
 
-    public function test_live_import_requires_confirmation_phrase(): void
+    public function test_import_store_route_is_disabled(): void
     {
         $admin = User::factory()->create([
             'role_id' => \App\Models\Role::query()->where('slug', \App\Models\Role::SLUG_FAST_ADMINISTRATOR)->value('id'),
             'is_super_admin' => true,
         ]);
 
-        $response = $this->actingAs($admin)->post(route('mhe-downtimes.import.store'), [
-            'host' => '127.0.0.1',
-            'database' => 'eagle_eye_test',
-            'username' => 'root',
-            'import_downtimes' => '1',
-        ]);
-
-        $response->assertSessionHasErrors('confirmation');
-    }
-
-    public function test_store_dispatches_background_import_job(): void
-    {
-        Queue::fake();
-
-        $admin = User::factory()->create([
-            'role_id' => \App\Models\Role::query()->where('slug', \App\Models\Role::SLUG_FAST_ADMINISTRATOR)->value('id'),
-            'is_super_admin' => true,
-        ]);
-
-        $response = $this->actingAs($admin)->post(route('mhe-downtimes.import.store'), [
+        $this->actingAs($admin)->post('/mhe-downtimes/import', [
             'host' => '127.0.0.1',
             'database' => 'eagle_eye_test',
             'username' => 'root',
             'import_users' => '1',
             'import_downtimes' => '1',
             'dry_run' => '1',
-        ]);
-
-        $batch = MheDowntimeImportBatch::query()->first();
-        $this->assertNotNull($batch);
-        $response->assertRedirect(route('mhe-downtimes.import.progress', $batch->batch_id));
-        Queue::assertPushed(RunFscWebImportJob::class);
+        ])->assertMethodNotAllowed();
     }
 
-    public function test_status_endpoint_returns_batch_progress(): void
+    public function test_import_status_route_is_disabled(): void
     {
         $admin = User::factory()->create([
             'role_id' => \App\Models\Role::query()->where('slug', \App\Models\Role::SLUG_FAST_ADMINISTRATOR)->value('id'),
             'is_super_admin' => true,
         ]);
 
-        $batch = MheDowntimeImportBatch::query()->create([
-            'batch_id' => (string) \Illuminate\Support\Str::uuid(),
-            'source' => MheDowntimeImportSource::EagleEyeMysql,
-            'source_summary' => 'test',
-            'dry_run' => true,
-            'status' => FscWebImportStatus::Running,
-            'phase' => 'importing_downtimes',
-            'progress_percent' => 42,
-            'processed_count' => 10,
-            'total_count' => 24,
-            'status_message' => 'Importing downtimes…',
-            'created_by' => $admin->id,
-        ]);
-
         $this->actingAs($admin)
-            ->getJson(route('mhe-downtimes.import.status', $batch->batch_id))
-            ->assertOk()
-            ->assertJsonPath('status', 'running')
-            ->assertJsonPath('progress_percent', 42)
-            ->assertJsonPath('processed_count', 10)
-            ->assertJsonPath('total_count', 24);
+            ->getJson('/mhe-downtimes/import/00000000-0000-0000-0000-000000000000/status')
+            ->assertNotFound();
     }
 
     public function test_purge_reseeds_default_users(): void

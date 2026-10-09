@@ -2,11 +2,6 @@
 @section('title', 'MHE Downtimes')
 @section('content')
 <x-page-header title="MHE Downtimes" :breadcrumbs="['Transactions'=>null,'MHE Downtimes'=>null]" />
-<div class="d-flex justify-content-end gap-2 mb-2">
-    @if(auth()->user()->hasPermission('mhe-downtimes.import'))
-        <a href="{{ route('mhe-downtimes.import.index') }}" class="btn btn-outline-secondary btn-sm">Import from fsc_web</a>
-    @endif
-</div>
 <x-list-toolbar :route="route('mhe-downtimes.index')" :state="$state" :create-route="auth()->user()->can('create', \App\Models\MheDowntime::class) ? route('mhe-downtimes.create') : null" />
 
 <div class="card mb-3">

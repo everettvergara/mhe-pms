@@ -110,15 +110,15 @@ class MheDowntimeImportModuleTest extends TestCase
         $this->assertSame(DowntimeStatus::Draft, $downtime->status);
     }
 
-    public function test_import_index_requires_permission(): void
+    public function test_import_index_route_is_disabled(): void
     {
         $user = User::factory()->supplier()->create();
-        $this->actingAs($user)->get(route('mhe-downtimes.import.index'))->assertForbidden();
+        $this->actingAs($user)->get('/mhe-downtimes/import')->assertNotFound();
     }
 
-    public function test_import_create_accessible_with_permission(): void
+    public function test_import_create_route_is_disabled(): void
     {
         $admin = User::factory()->create();
-        $this->actingAs($admin)->get(route('mhe-downtimes.import.create'))->assertOk();
+        $this->actingAs($admin)->get('/mhe-downtimes/import/run')->assertNotFound();
     }
 }

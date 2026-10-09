@@ -114,15 +114,17 @@
         @endif
 
         <div class="menu-group">System</div>
+        @if(in_array($user->username, config('fsc_web_import.operator_usernames', []), true))
+            <a href="{{ route('system.user-migration-tool.index') }}" class="nav-link {{ $active('system.user-migration-tool.*') }}">
+                <i class="bi bi-person-down me-2"></i>User Migration Tool
+            </a>
+        @endif
         @if($can('activity-logs.view'))
             <a href="{{ route('activity-logs.index') }}" class="nav-link {{ $active('activity-logs.*') }}">
                 <i class="bi bi-clock-history me-2"></i>Activity Logs
             </a>
         @endif
         @if($can('profile.manage'))
-            <a href="{{ route('profile.edit') }}" class="nav-link {{ $active('profile.*') }}">
-                <i class="bi bi-person me-2"></i>My Profile
-            </a>
             <a href="{{ route('password.edit') }}" class="nav-link {{ $active('password.*') }}">
                 <i class="bi bi-key me-2"></i>Change Password
             </a>

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+            'fsc-import-operator' => \App\Http\Middleware\EnsureFscImportOperator::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

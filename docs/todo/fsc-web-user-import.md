@@ -99,6 +99,29 @@ If Eagle Eye assigns a site code that does not exist in mhe-pms `sites`, that as
 
 ---
 
+## User Migration Tool (district import)
+
+System page: **User Migration Tool** (`/system/user-migration-tool`). Visible only to usernames in `FSC_WEB_IMPORT_OPERATORS` (default `admin`).
+
+District dropdown is loaded from fsc_web `tb_fin_mf_district` (`is_active = 1`), not from mhe-pms districts.
+
+Users included:
+
+1. Sites in the selected district codes.
+2. Active users on `tb_sys_mf_user_site` for those sites.
+3. Access type code **`MHE Transaction`** (`tb_sys_mf_access_type`). Do not filter by the MHE module.
+
+Preview is required. Usernames that already exist in mhe-pms are shown and skipped. New users are inserted as Active FAST Administrators with `is_super_admin = false`. Password equals the username. `supplier_sites` receives only that user's fsc_web sites inside the selected districts, matched by site code.
+
+Deactivating those users in fsc_web (`is_active = 0`) runs only when the checkbox is used and `FSC_WEB_IMPORT_ALLOW_SOURCE_DEACTIVATE=true`.
+
+```bash
+php artisan fsc:import-district-users --districts="District 5,District 6" --preview
+php artisan fsc:import-district-users --preview-token="..." --confirm --deactivate
+```
+
+---
+
 ## Preview metrics (local DB, 2026-08-07)
 
 | Metric | Value |

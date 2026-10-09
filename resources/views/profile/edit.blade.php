@@ -79,19 +79,5 @@
             </div>
         </div>
     </div>
-
-    @if (auth()->user()->isSuperAdmin())
-        <div class="col-lg-6 col-xl-5">
-            <div class="card">
-                <div class="card-header">Admin Tools</div>
-                <div class="card-body">
-                    <p class="text-muted mb-3">Import users and downtime data from FSC Web / Eagle Eye.</p>
-                    <a href="{{ route('mhe-downtimes.import.create') }}" class="btn btn-outline-primary">
-                        Run FSC Web Import
-                    </a>
-                </div>
-            </div>
-        </div>
-    @endif
 </div>
 @endsection
