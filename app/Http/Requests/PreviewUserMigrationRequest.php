@@ -21,12 +21,7 @@ class PreviewUserMigrationRequest extends FormRequest
     {
         return [
             'districts' => ['required', 'array', 'min:1'],
-            'districts.*' => ['required', 'string', 'max:30'],
-            'host' => ['nullable', 'string', 'max:255'],
-            'port' => ['nullable', 'integer', 'min:1', 'max:65535'],
-            'database' => ['nullable', 'string', 'max:255'],
-            'username' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'max:255'],
+            'districts.*' => ['required', 'string', 'max:30', 'exists:districts,district_code'],
         ];
     }
 }

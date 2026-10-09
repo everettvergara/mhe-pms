@@ -103,7 +103,7 @@ If Eagle Eye assigns a site code that does not exist in mhe-pms `sites`, that as
 
 System page: **User Migration Tool** (`/system/user-migration-tool`). Visible only to usernames in `FSC_WEB_IMPORT_OPERATORS` (default `admin`).
 
-District dropdown is loaded from fsc_web `tb_fin_mf_district` (`is_active = 1`), not from mhe-pms districts.
+The district dropdown is the Active districts already stored in mhe-pms (`district_code`). Preview and import use those codes against fsc_web. The page does not ask for a database connection.
 
 Users included:
 

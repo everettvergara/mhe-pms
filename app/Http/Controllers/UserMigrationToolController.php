@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RecordStatus;
 use App\Http\Requests\ImportUserMigrationRequest;
 use App\Http\Requests\PreviewUserMigrationRequest;
-use App\Services\FscWebImport\FscDistrictImportToken;
+use App\Models\District;
 use App\Services\FscWebImport\FscDistrictUserImportService;
 use App\Services\FscWebImport\FscWebConnection;
 use Illuminate\Http\RedirectResponse;
@@ -14,14 +15,14 @@ use Throwable;
 
 class UserMigrationToolController extends Controller
 {
-    public function index(FscDistrictUserImportService $importService): View
+    public function index(): View
     {
-        return view('system.user-migration-tool.index', $this->pageData($importService));
+        return view('system.user-migration-tool.index', $this->pageData());
     }
 
     public function preview(PreviewUserMigrationRequest $request, FscDistrictUserImportService $importService): View|RedirectResponse
     {
-        $connection = $this->connectionFromRequest($request->validated());
+        $connection = FscWebConnection::configFromEnv();
 
         try {
             $pdo = FscWebConnection::connect($connection);
@@ -33,7 +34,7 @@ class UserMigrationToolController extends Controller
         }
 
         return view('system.user-migration-tool.index', array_merge(
-            $this->pageData($importService, $connection),
+            $this->pageData(),
             ['preview' => $preview],
         ));
     }
@@ -41,8 +42,7 @@ class UserMigrationToolController extends Controller
     public function import(ImportUserMigrationRequest $request, FscDistrictUserImportService $importService): RedirectResponse
     {
         try {
-            $payload = FscDistrictImportToken::parse($request->validated('preview_token'));
-            $pdo = FscWebConnection::connect($payload['connection'] ?? []);
+            $pdo = FscWebConnection::connect(FscWebConnection::configFromEnv());
             $result = $importService->import(
                 $pdo,
                 $request->validated('preview_token'),
@@ -75,45 +75,18 @@ class UserMigrationToolController extends Controller
     }
 
     /**
-     * @param  array<string, mixed>|null  $connection
      * @return array<string, mixed>
      */
-    protected function pageData(FscDistrictUserImportService $importService, ?array $connection = null): array
+    protected function pageData(): array
     {
-        $connection ??= FscWebConnection::configFromEnv();
-        $districts = [];
-        $connectionError = null;
-
-        try {
-            $districts = $importService->fetchDistricts(FscWebConnection::connect($connection));
-        } catch (Throwable $exception) {
-            $connectionError = $exception->getMessage();
-        }
-
         return [
-            'districts' => $districts,
-            'connectionError' => $connectionError,
-            'connection' => $connection,
+            'districts' => District::query()
+                ->where('status', RecordStatus::Active)
+                ->orderBy('district_code')
+                ->get(['id', 'district_code', 'district_name']),
             'allowDeactivate' => (bool) config('fsc_web_import.allow_source_deactivate'),
             'confirmationPhrase' => config('fsc_web_import.confirmation_phrase'),
             'preview' => null,
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $input
-     * @return array<string, mixed>
-     */
-    protected function connectionFromRequest(array $input): array
-    {
-        $env = FscWebConnection::configFromEnv();
-
-        return [
-            'host' => ($input['host'] ?? '') !== '' ? $input['host'] : ($env['host'] ?? null),
-            'port' => ($input['port'] ?? '') !== '' ? $input['port'] : ($env['port'] ?? 3306),
-            'database' => ($input['database'] ?? '') !== '' ? $input['database'] : ($env['database'] ?? null),
-            'username' => ($input['username'] ?? '') !== '' ? $input['username'] : ($env['username'] ?? null),
-            'password' => ($input['password'] ?? '') !== '' ? $input['password'] : ($env['password'] ?? ''),
         ];
     }
 }

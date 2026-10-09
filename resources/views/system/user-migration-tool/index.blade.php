@@ -10,20 +10,16 @@
     </div>
 </div>
 
-@if($connectionError)
-    <div class="alert alert-warning">Could not load districts from fsc_web: {{ $connectionError }}</div>
-@endif
-
 <div class="card mb-3">
     <div class="card-body">
         <form method="POST" action="{{ route('system.user-migration-tool.preview') }}" class="row g-3">
             @csrf
             <div class="col-md-6">
-                <label class="form-label" for="districts">Districts from fsc_web</label>
+                <label class="form-label" for="districts">Districts</label>
                 <select id="districts" name="districts[]" class="form-select @error('districts') is-invalid @enderror" multiple size="8" required>
                     @foreach($districts as $district)
-                        <option value="{{ $district['code'] }}" @selected(in_array($district['code'], old('districts', $preview['districts'] ?? []), true))>
-                            {{ $district['code'] }} — {{ $district['name'] }}
+                        <option value="{{ $district->district_code }}" @selected(in_array($district->district_code, old('districts', $preview['districts'] ?? []), true))>
+                            {{ $district->district_code }} — {{ $district->district_name }}
                         </option>
                     @endforeach
                 </select>
@@ -31,30 +27,6 @@
                 @error('districts')
                     <div class="invalid-feedback d-block">{{ $message }}</div>
                 @enderror
-            </div>
-            <div class="col-md-6">
-                <div class="row g-3">
-                    <div class="col-8">
-                        <label class="form-label" for="host">Host</label>
-                        <input id="host" type="text" name="host" class="form-control" value="{{ old('host', $connection['host'] ?? '') }}" placeholder="Uses FSC_WEB_DB_HOST when blank">
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label" for="port">Port</label>
-                        <input id="port" type="number" name="port" class="form-control" value="{{ old('port', $connection['port'] ?? 3306) }}">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" for="database">Database</label>
-                        <input id="database" type="text" name="database" class="form-control" value="{{ old('database', $connection['database'] ?? '') }}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="username">Username</label>
-                        <input id="username" type="text" name="username" class="form-control" value="{{ old('username', $connection['username'] ?? '') }}">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="password">Password</label>
-                        <input id="password" type="password" name="password" class="form-control" placeholder="Blank uses FSC_WEB_DB_PASSWORD" autocomplete="new-password">
-                    </div>
-                </div>
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">Preview</button>

@@ -15,10 +15,10 @@ return [
     'mhe_transaction_access_type' => 'MHE Transaction',
 
     'mysql' => [
-        'host' => env('FSC_WEB_DB_HOST'),
+        'host' => env('FSC_WEB_DB_HOST', '127.0.0.1'),
         'port' => env('FSC_WEB_DB_PORT', 3306),
-        'database' => env('FSC_WEB_DB_DATABASE'),
-        'username' => env('FSC_WEB_DB_USERNAME'),
-        'password' => env('FSC_WEB_DB_PASSWORD', ''),
+        'database' => env('FSC_WEB_DB_DATABASE', 'eagleeyefastlogi_fsc_dashboard'),
+        'username' => env('FSC_WEB_DB_USERNAME', 'eagleeyefastlogi_user'),
+        'password' => env('FSC_WEB_DB_PASSWORD', 'qc5E;zos#Fe54HQT'),
     ],
 ];
