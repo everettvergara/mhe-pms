@@ -658,8 +658,9 @@ class MheDowntimeTest extends TestCase
         $actionPlan = $downtime->actionPlans()->first();
         $this->assertSame(DowntimeActionPlanStatus::Pending, $actionPlan->status);
 
-        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]))
-            ->assertRedirect(route('mhe-downtimes.show', $downtime));
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]), [
+            'unit_safe_guaranteed' => '1',
+        ])->assertRedirect(route('mhe-downtimes.show', $downtime));
 
         $actionPlan->refresh();
         $this->assertSame(DowntimeActionPlanStatus::WaitingForFastConfirmation, $actionPlan->status);
@@ -682,7 +683,9 @@ class MheDowntimeTest extends TestCase
         $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
         $actionPlan = $downtime->actionPlans()->first();
 
-        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]));
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]), [
+            'unit_safe_guaranteed' => '1',
+        ]);
 
         $this->actingAs($admin)->post(route('mhe-downtime-action-plan-confirmations.reject', $actionPlan), [
             'rejection_remarks' => 'Incomplete work',
@@ -700,6 +703,96 @@ class MheDowntimeTest extends TestCase
         $this->assertSame('Updated hose replacement', $actionPlan->title);
     }
 
+    public function test_mark_implemented_requires_unit_safety_guarantee(): void
+    {
+        $downtime = $this->createPostedDowntime();
+
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
+        $actionPlan = $downtime->actionPlans()->first();
+
+        $this->actingAs($this->siteUser)
+            ->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $fresh = $actionPlan->fresh();
+        $this->assertSame(DowntimeActionPlanStatus::Pending, $fresh->status);
+        $this->assertFalse($fresh->unit_safe_guaranteed);
+    }
+
+    public function test_implemented_comment_records_unit_safety_guarantee(): void
+    {
+        $downtime = $this->createPostedDowntime();
+
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
+        $actionPlan = $downtime->actionPlans()->first();
+
+        $pendingShow = $this->actingAs($this->siteUser)->get(route('mhe-downtimes.show', $downtime));
+        $pendingShow->assertOk();
+        $pendingShow->assertSee('I guarantee that the unit is safe to use', false);
+        $pendingShow->assertSee('data-unit-safe-checkbox', false);
+        $pendingShow->assertSee('data-progress-status', false);
+        $pendingShow->assertDontSee('Mark Implemented');
+
+        $this->actingAs($this->siteUser)
+            ->post(route('mhe-downtimes.action-plans.comment', [$downtime, $actionPlan]), [
+                'comment' => 'Still working',
+                'progress_status' => 'Pending',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame(DowntimeActionPlanStatus::Pending, $actionPlan->fresh()->status);
+
+        $this->actingAs($this->siteUser)
+            ->from(route('mhe-downtimes.show', $downtime))
+            ->post(route('mhe-downtimes.action-plans.comment', [$downtime, $actionPlan]), [
+                'comment' => 'Work finished',
+                'progress_status' => 'Implemented',
+            ])
+            ->assertRedirect(route('mhe-downtimes.show', $downtime))
+            ->assertSessionHasErrors('unit_safe_guaranteed');
+
+        $actionPlan->refresh();
+        $this->assertSame(DowntimeActionPlanStatus::Pending, $actionPlan->status);
+        $this->assertSame(1, $actionPlan->comments()->count());
+
+        $this->actingAs($this->siteUser)
+            ->post(route('mhe-downtimes.action-plans.comment', [$downtime, $actionPlan]), [
+                'comment' => 'Work finished',
+                'progress_status' => 'Implemented',
+                'unit_safe_guaranteed' => '1',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $actionPlan->refresh();
+        $this->assertSame(DowntimeActionPlanStatus::WaitingForFastConfirmation, $actionPlan->status);
+        $this->assertTrue($actionPlan->unit_safe_guaranteed);
+        $this->assertSame($this->siteUser->id, $actionPlan->unit_safe_guaranteed_by);
+        $this->assertNotNull($actionPlan->unit_safe_guaranteed_at);
+
+        $show = $this->actingAs($this->siteUser)->get(route('mhe-downtimes.show', $downtime));
+        $show->assertOk()->assertSee('Unit safe')->assertSee($actionPlan->action_plan_no);
+        $show->assertDontSee('Mark Implemented');
+        $this->assertMatchesRegularExpression(
+            '/checked(?:\s[^>]*)?\saria-label="I guarantee that the unit is safe to use"/',
+            $show->getContent(),
+        );
+
+        $this->actingAs($this->fastAdmin)
+            ->post(route('mhe-downtime-action-plan-confirmations.reject', $actionPlan), [
+                'rejection_remarks' => 'Not safe yet',
+            ])
+            ->assertRedirect();
+
+        $actionPlan->refresh();
+        $this->assertSame(DowntimeActionPlanStatus::Rejected, $actionPlan->status);
+        $this->assertFalse($actionPlan->unit_safe_guaranteed);
+        $this->assertNull($actionPlan->unit_safe_guaranteed_by);
+        $this->assertNull($actionPlan->unit_safe_guaranteed_at);
+    }
+
     public function test_when_to_tracks_the_latest_implemented_action_item(): void
     {
         $downtime = $this->createPostedDowntime();
@@ -714,7 +807,9 @@ class MheDowntimeTest extends TestCase
 
         try {
             Carbon::setTestNow('2026-03-01 09:15:00');
-            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $first]));
+            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $first]), [
+                'unit_safe_guaranteed' => '1',
+            ]);
 
             $downtime->refresh();
             $first->refresh();
@@ -737,7 +832,9 @@ class MheDowntimeTest extends TestCase
             $second = $downtime->actionPlans()->where('title', 'Second repair')->first();
 
             Carbon::setTestNow('2026-03-04 16:45:00');
-            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $second]));
+            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $second]), [
+                'unit_safe_guaranteed' => '1',
+            ]);
 
             $downtime->refresh();
             $this->assertSame('2026-03-04 16:45:00', $downtime->uptime?->format('Y-m-d H:i:s'));
@@ -767,7 +864,9 @@ class MheDowntimeTest extends TestCase
 
         try {
             Carbon::setTestNow('2026-03-01 09:15:00');
-            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]));
+            $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]), [
+                'unit_safe_guaranteed' => '1',
+            ]);
         } finally {
             Carbon::setTestNow();
         }
@@ -973,7 +1072,9 @@ class MheDowntimeTest extends TestCase
         $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.store', $downtime), $this->actionItemPayload());
         $actionPlan = $downtime->actionPlans()->first();
 
-        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]));
+        $this->actingAs($this->siteUser)->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]), [
+            'unit_safe_guaranteed' => '1',
+        ]);
 
         $response = $this->actingAs($this->fastAdmin)->get(route('mhe-downtimes.show', [
             'mhe_downtime' => $downtime,

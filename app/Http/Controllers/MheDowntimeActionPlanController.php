@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DowntimeActionPlanStatus;
 use App\Enums\ProgressStatus;
 use App\Http\Requests\StoreMheDowntimeActionPlanCommentRequest;
 use App\Http\Requests\StoreMheDowntimeActionPlanRequest;
@@ -12,6 +13,7 @@ use App\Services\MheDowntimeActionPlanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MheDowntimeActionPlanController extends Controller
 {
@@ -66,14 +68,34 @@ class MheDowntimeActionPlanController extends Controller
         $this->ensureBelongsToDowntime($mheDowntime, $actionPlan);
         $this->authorize('comment', $actionPlan);
 
-        $this->actionPlanService->addComment(
-            $request->user(),
-            $actionPlan,
-            $request->validated('comment'),
-            ProgressStatus::from($request->validated('progress_status')),
-        );
+        $progressStatus = ProgressStatus::from($request->validated('progress_status'));
+        $unitSafeGuaranteed = $request->boolean('unit_safe_guaranteed');
+        $markedImplemented = false;
 
-        return $this->redirectToContext($mheDowntime, $request)->with('success', 'Comment added successfully.');
+        try {
+            DB::transaction(function () use ($request, $actionPlan, $progressStatus, $unitSafeGuaranteed, &$markedImplemented): void {
+                $this->actionPlanService->addComment(
+                    $request->user(),
+                    $actionPlan,
+                    $request->validated('comment'),
+                    $progressStatus,
+                );
+
+                if ($progressStatus === ProgressStatus::Implemented
+                    && in_array($actionPlan->status, [DowntimeActionPlanStatus::Pending, DowntimeActionPlanStatus::Rejected], true)) {
+                    $this->actionPlanService->markImplemented($actionPlan, $request->user(), $unitSafeGuaranteed);
+                    $markedImplemented = true;
+                }
+            });
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $message = $markedImplemented
+            ? 'Action item marked as implemented.'
+            : 'Comment added successfully.';
+
+        return $this->redirectToContext($mheDowntime, $request)->with('success', $message);
     }
 
     public function markImplemented(Request $request, MheDowntime $mheDowntime, MheDowntimeActionPlan $actionPlan): RedirectResponse
@@ -82,7 +104,11 @@ class MheDowntimeActionPlanController extends Controller
         $this->authorize('markImplemented', $actionPlan);
 
         try {
-            $this->actionPlanService->markImplemented($actionPlan, $request->user());
+            $this->actionPlanService->markImplemented(
+                $actionPlan,
+                $request->user(),
+                $request->boolean('unit_safe_guaranteed'),
+            );
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }

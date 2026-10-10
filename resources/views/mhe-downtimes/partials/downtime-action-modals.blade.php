@@ -15,6 +15,7 @@
                         <th>Responsible</th>
                         <th>Timeline</th>
                         <th>Status</th>
+                        <th title="I guarantee that the unit is safe to use">Unit safe</th>
                         <th></th>
                     </tr>
                 </thead>

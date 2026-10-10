@@ -164,6 +164,11 @@ class PmsInventoryLookupTest extends TestCase
         $response->assertOk();
         $response->assertSee('value="Site One (SITE1)"', false);
         $response->assertSee('id="pms_site_id" value="'.$this->site->id.'"', false);
+        $response->assertSee('name="unit_number" id="pms_unit_number" class="form-select', false);
+        $response->assertSee('name="date_from" class="form-control form-control-sm" value="'.now()->format('Y-m-d').'"', false);
+        $response->assertSee('name="date_to" class="form-control form-control-sm" value="'.now()->format('Y-m-d').'"', false);
+        $response->assertSee('name="next_schedule_date" class="form-control form-control-sm" value="'.now()->addMonth()->format('Y-m-d').'"', false);
+        $response->assertDontSee('pms-unit-numbers', false);
     }
 
     public function test_create_form_leaves_site_blank_when_multiple_sites_are_assigned(): void

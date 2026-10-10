@@ -13,6 +13,7 @@
     <td class="small">{{ $plan->responsible_person }}</td>
     <td class="small text-nowrap">{{ $plan->timeline_from?->format('Y-m-d') }} – {{ $plan->timeline_to?->format('Y-m-d') }}</td>
     <td><x-status-badge :status="$plan->status" /></td>
+    <td><x-unit-safe-checkbox :checked="$plan->unit_safe_guaranteed" /></td>
     <td class="text-nowrap">
         @if($canEdit)
             <button

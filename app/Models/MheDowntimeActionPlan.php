@@ -24,6 +24,9 @@ class MheDowntimeActionPlan extends Model
         'timeline_from',
         'timeline_to',
         'status',
+        'unit_safe_guaranteed',
+        'unit_safe_guaranteed_by',
+        'unit_safe_guaranteed_at',
         'date_implemented',
         'confirmed_by',
         'confirmed_at',
@@ -38,6 +41,8 @@ class MheDowntimeActionPlan extends Model
     {
         return [
             'status' => DowntimeActionPlanStatus::class,
+            'unit_safe_guaranteed' => 'boolean',
+            'unit_safe_guaranteed_at' => 'datetime',
             'action_plan_date' => 'date',
             'timeline_from' => 'date',
             'timeline_to' => 'date',
@@ -70,6 +75,11 @@ class MheDowntimeActionPlan extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function unitSafeGuarantor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'unit_safe_guaranteed_by');
     }
 
     public function confirmer(): BelongsTo

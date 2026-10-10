@@ -193,8 +193,14 @@ class WorkflowNotificationTest extends TestCase
         $actionPlan = $downtime->actionPlans()->first();
 
         $this->actingAs($this->supplierUser)
-            ->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]))
+            ->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]), [
+                'unit_safe_guaranteed' => '1',
+            ])
             ->assertRedirect(route('mhe-downtimes.show', $downtime));
+
+        $actionPlan->refresh();
+        $this->assertTrue($actionPlan->unit_safe_guaranteed);
+        $this->assertSame($this->supplierUser->id, $actionPlan->unit_safe_guaranteed_by);
 
         Notification::assertSentTo($this->fastAdmin, DowntimeActionPlanWorkflowNotification::class);
     }
@@ -390,7 +396,9 @@ class WorkflowNotificationTest extends TestCase
         $actionPlan = $downtime->actionPlans()->first();
 
         $this->actingAs($this->supplierUser)
-            ->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]));
+            ->post(route('mhe-downtimes.action-plans.mark-implemented', [$downtime, $actionPlan]), [
+                'unit_safe_guaranteed' => '1',
+            ]);
 
         return $actionPlan->fresh();
     }

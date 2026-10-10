@@ -136,7 +136,7 @@ class MheDowntimeActionPlanService
         });
     }
 
-    public function markImplemented(MheDowntimeActionPlan $actionPlan, User $user): MheDowntimeActionPlan
+    public function markImplemented(MheDowntimeActionPlan $actionPlan, User $user, bool $unitSafeGuaranteed): MheDowntimeActionPlan
     {
         $this->assertSupplierOnly($user);
         $this->assertDowntimeAccess($user, $actionPlan->mheDowntime);
@@ -146,10 +146,17 @@ class MheDowntimeActionPlanService
             throw new RuntimeException('Only pending or rejected action items can be marked as implemented.');
         }
 
+        if (! $unitSafeGuaranteed) {
+            throw new RuntimeException('You must guarantee that the unit is safe to use.');
+        }
+
         return DB::transaction(function () use ($actionPlan, $user) {
             $actionPlan->update([
                 'status' => DowntimeActionPlanStatus::WaitingForFastConfirmation,
                 'date_implemented' => now(),
+                'unit_safe_guaranteed' => true,
+                'unit_safe_guaranteed_by' => $user->id,
+                'unit_safe_guaranteed_at' => now(),
                 'updated_by' => $user->id,
             ]);
 
@@ -226,6 +233,9 @@ class MheDowntimeActionPlanService
                 'rejected_by' => $user->id,
                 'rejected_at' => now(),
                 'rejection_remarks' => $rejectionRemarks,
+                'unit_safe_guaranteed' => false,
+                'unit_safe_guaranteed_by' => null,
+                'unit_safe_guaranteed_at' => null,
                 'updated_by' => $user->id,
             ]);
 

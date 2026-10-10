@@ -127,7 +127,7 @@
                 <div class="card-header bg-white"><strong>Pending FAST Confirmations</strong></div>
                 <div class="table-responsive">
                     <table class="table table-hover table-sm mb-0">
-                        <thead><tr><th>AP No.</th><th>Downtime</th><th>Supplier</th><th>Title</th><th>Status</th></tr></thead>
+                        <thead><tr><th>AP No.</th><th>Downtime</th><th>Supplier</th><th>Title</th><th>Status</th><th title="I guarantee that the unit is safe to use">Unit safe</th></tr></thead>
                         <tbody>
                             @forelse($data['downtime_pending_confirmations'] as $item)
                                 <tr @if($item->parentShowUrl()) data-href="{{ $item->parentShowUrl() }}" @endif>
@@ -136,9 +136,10 @@
                                     <td>{{ $item->mheDowntime?->supplier?->supplier_name }}</td>
                                     <td>{{ $item->title }}</td>
                                     <td><x-status-badge :status="$item->status" /></td>
+                                    <td><x-unit-safe-checkbox :checked="$item->unit_safe_guaranteed" /></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center text-muted py-3">No pending downtime confirmations.</td></tr>
+                                <tr><td colspan="6" class="text-center text-muted py-3">No pending downtime confirmations.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

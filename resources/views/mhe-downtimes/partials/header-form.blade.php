@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const loadSites = async () => {
+    const loadSites = async (openMenu = true) => {
         if (!siteMenuList || siteSearch.disabled) return;
         const params = new URLSearchParams();
         const value = siteSearch.value.trim();
@@ -326,7 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return `<button type="button" class="suggest-menu-item" data-label="${escapeAttr(site.label)}">${escapeAttr(site.label)}</button>`;
             }).join('')
             : '<div class="suggest-menu-empty">No sites found</div>';
-        openSiteMenu();
+        if (openMenu) {
+            openSiteMenu();
+        }
     };
 
     const onSiteResolved = async () => {
@@ -473,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.assign(response.url);
     });
 
-    loadSites().then(async () => {
+    loadSites(false).then(async () => {
         await resolveSite();
         await loadUnits();
         await lookupUnit();

@@ -1,5 +1,8 @@
 @php
-    $dateFrom = old('date_from', $pms->date_from?->format('Y-m-d'));
+    $today = now()->format('Y-m-d');
+    $dateFrom = old('date_from', $isNew ? $today : $pms->date_from?->format('Y-m-d'));
+    $dateTo = old('date_to', $isNew ? $today : $pms->date_to?->format('Y-m-d'));
+    $nextScheduleDate = old('next_schedule_date', $isNew ? now()->addMonth()->format('Y-m-d') : $pms->next_schedule_date?->format('Y-m-d'));
     $readOnly = $readOnly ?? false;
     $selectedSiteId = old('site_id', $pms->site_id);
     if ($isNew && blank($selectedSiteId)) {
@@ -75,8 +78,9 @@
                 @if($readOnly)
                     <div class="small">{{ $pms->unit_number }}</div>
                 @else
-                    <input name="unit_number" id="pms_unit_number" list="pms-unit-numbers" class="form-control form-control-sm @error('unit_number') is-invalid @enderror" value="{{ old('unit_number', $pms->unit_number) }}" autocomplete="off" required>
-                    <datalist id="pms-unit-numbers"></datalist>
+                    <select name="unit_number" id="pms_unit_number" class="form-select @error('unit_number') is-invalid @enderror" data-selected="{{ old('unit_number', $pms->unit_number) }}" required>
+                        <option value="">Select unit</option>
+                    </select>
                     @error('unit_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 @endif
             </div>
@@ -113,11 +117,11 @@
             </div>
             <div class="col-auto">
                 <label class="form-label mb-0">Date To <span class="required-mark">*</span></label>
-                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ old('date_to', $pms->date_to?->format('Y-m-d')) }}" min="{{ $dateFrom }}" required>
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ $dateTo }}" min="{{ $dateFrom }}" required>
             </div>
             <div class="col-auto">
                 <label class="form-label mb-0">Next PMS Date <span class="required-mark">*</span></label>
-                <input type="date" name="next_schedule_date" class="form-control form-control-sm" value="{{ old('next_schedule_date', $pms->next_schedule_date?->format('Y-m-d')) }}" min="{{ now()->format('Y-m-d') }}" required>
+                <input type="date" name="next_schedule_date" class="form-control form-control-sm" value="{{ $nextScheduleDate }}" min="{{ $today }}" required>
             </div>
             @else
             <div class="col-md-4">
@@ -185,31 +189,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const siteToggle = document.getElementById('pms-site-options-toggle');
     const siteHint = document.getElementById('pms-site-hint');
     const typeSelect = document.getElementById('pms_mhe_type_id');
-    const unitInput = document.getElementById('pms_unit_number');
-    const unitDatalist = document.getElementById('pms-unit-numbers');
+    const unitSelect = document.getElementById('pms_unit_number');
     const supplierSelect = document.getElementById('pms_supplier_id');
     const pmsForm = document.getElementById('pms-save-form');
 
-    if (!siteSearch || !siteIdInput || !unitInput) {
+    if (!siteSearch || !siteIdInput || !unitSelect) {
         return;
     }
 
     let siteDebounceTimer = null;
     let selectedSiteLabel = siteSearch.value.trim();
-    let unitDebounceTimer = null;
-    let loadedUnits = [];
+    let unitsLoadedOnce = false;
 
-    const bareUnitQuery = (value) => {
-        const trimmed = value.trim();
-        const match = trimmed.match(/^(.*)\s+\([^)]*\)$/);
-
-        return match ? match[1].trim() : trimmed;
-    };
-
-    const escapeAttr = (value) => String(value)
+    const escapeAttr = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
         .replace(/</g, '&lt;');
+
+    const unitOptionLabel = (unit) => {
+        let label = `(${unit.unit_no})`;
+        if (unit.mhe_type_label) {
+            label += ` ${unit.mhe_type_label}`;
+        }
+        if (unit.supplier_name) {
+            label += ` — ${unit.supplier_name}`;
+        }
+        return label;
+    };
 
     const resolveSite = async () => {
         const term = siteSearch.value.trim();
@@ -248,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const loadSites = async () => {
+    const loadSites = async (openMenu = true) => {
         if (!siteMenuList) return;
         const params = new URLSearchParams();
         const value = siteSearch.value.trim();
@@ -258,60 +264,43 @@ document.addEventListener('DOMContentLoaded', () => {
         siteMenuList.innerHTML = sites.length
             ? sites.map(site => `<button type="button" class="suggest-menu-item" data-label="${escapeAttr(site.label)}">${escapeAttr(site.label)}</button>`).join('')
             : '<div class="suggest-menu-empty">No sites found</div>';
-        openSiteMenu();
+        if (openMenu) {
+            openSiteMenu();
+        }
     };
 
     const loadUnits = async () => {
-        if (!unitDatalist) return;
         const siteId = siteIdInput.value;
+        const selected = unitsLoadedOnce ? unitSelect.value : (unitSelect.dataset.selected || '');
         if (!siteId) {
-            unitDatalist.innerHTML = '';
-            loadedUnits = [];
+            unitSelect.innerHTML = '<option value="">Select unit</option>';
+            unitsLoadedOnce = true;
             return;
         }
         const params = new URLSearchParams({ site_id: siteId });
-        const query = bareUnitQuery(unitInput.value);
-        if (query) params.set('q', query);
         const response = await fetch(`{{ route('pms.search-units') }}?${params.toString()}`);
         const units = await response.json();
-        loadedUnits = units;
-        unitDatalist.innerHTML = units.map(unit => `<option value="${escapeAttr(unit.label || unit.unit_no)}"></option>`).join('');
-    };
-
-    const applyUnitSelection = () => {
-        const raw = unitInput.value.trim();
-        if (!raw) {
-            return false;
+        const seen = new Set();
+        const options = ['<option value="">Select unit</option>'];
+        units.forEach(unit => {
+            const unitNo = String(unit.unit_no ?? '');
+            if (!unitNo || seen.has(unitNo)) return;
+            seen.add(unitNo);
+            const selectedAttr = unitNo === selected ? ' selected' : '';
+            options.push(
+                `<option value="${escapeAttr(unitNo)}" data-mhe-type-id="${escapeAttr(unit.mhe_type_id ?? '')}" data-supplier-id="${escapeAttr(unit.supplier_id ?? '')}"${selectedAttr}>${escapeAttr(unitOptionLabel(unit))}</option>`
+            );
+        });
+        if (selected && !seen.has(selected)) {
+            options.push(`<option value="${escapeAttr(selected)}" selected>${escapeAttr(selected)}</option>`);
         }
-
-        const bare = bareUnitQuery(raw);
-        const match = loadedUnits.find(unit =>
-            unit.label === raw || unit.unit_no === raw || unit.unit_no === bare
-        );
-
-        if (!match) {
-            return false;
-        }
-
-        unitInput.value = match.unit_no ?? '';
-        if (match.mhe_type_id && typeSelect) {
-            typeSelect.value = String(match.mhe_type_id);
-        }
-        if (match.supplier_id && supplierSelect) {
-            supplierSelect.value = String(match.supplier_id);
-        }
-
-        return true;
+        unitSelect.innerHTML = options.join('');
+        unitsLoadedOnce = true;
     };
 
     const lookupUnit = async () => {
-        applyUnitSelection();
-
         const siteId = siteIdInput.value;
-        const unitNumber = bareUnitQuery(unitInput.value);
-        if (unitNumber !== unitInput.value.trim()) {
-            unitInput.value = unitNumber;
-        }
+        const unitNumber = unitSelect.value.trim();
         if (!siteId || !unitNumber) {
             return;
         }
@@ -326,9 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (result.supplier_id && supplierSelect) {
                 supplierSelect.value = String(result.supplier_id);
-            }
-            if (result.unit_no) {
-                unitInput.value = result.unit_no;
             }
         }
     };
@@ -386,26 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lookupUnit();
     });
 
-    unitInput.addEventListener('focus', async () => {
-        const resolved = await resolveSite();
-        if (!resolved) {
-            siteHint?.classList.remove('d-none');
-            siteSearch.focus();
-            return;
-        }
-        loadUnits();
-    });
-
-    unitInput.addEventListener('input', () => {
-        clearTimeout(unitDebounceTimer);
-        unitDebounceTimer = setTimeout(() => {
-            loadUnits();
-            lookupUnit();
-        }, 250);
-    });
-
-    unitInput.addEventListener('change', lookupUnit);
-    unitInput.addEventListener('blur', lookupUnit);
+    unitSelect.addEventListener('change', lookupUnit);
 
     pmsForm?.addEventListener('submit', async (event) => {
         const resolved = await resolveSite();
@@ -417,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    loadSites().then(async () => {
+    loadSites(false).then(async () => {
         await resolveSite();
         await loadUnits();
         await lookupUnit();
