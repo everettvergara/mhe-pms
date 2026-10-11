@@ -7,6 +7,7 @@ enum MheDowntimeImportSource: string
     case EagleEyeJsonSeed = 'eagle_eye_json_seed';
     case EagleEyeMysql = 'eagle_eye_mysql';
     case EagleEyeSqlDump = 'eagle_eye_sql_dump';
+    case FscWebTool = 'fsc_web_tool';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum MheDowntimeImportSource: string
             self::EagleEyeJsonSeed => 'Eagle Eye JSON seed files',
             self::EagleEyeMysql => 'Eagle Eye live MySQL database',
             self::EagleEyeSqlDump => 'Eagle Eye SQL dump file',
+            self::FscWebTool => 'Migrate MHE Downtime Data',
         };
     }
 
@@ -23,6 +25,7 @@ enum MheDowntimeImportSource: string
             self::EagleEyeJsonSeed => 'Import from bundled JSON under database/data/eagle_eye (exported from fsc_web).',
             self::EagleEyeMysql => 'Connect to an Eagle Eye MySQL server, export on the fly, then import.',
             self::EagleEyeSqlDump => 'Upload or point to an Eagle Eye .sql dump; export on the fly, then import.',
+            self::FscWebTool => 'Super-admin tool that copies fsc_web downtimes for one district and its sites.',
         };
     }
 }

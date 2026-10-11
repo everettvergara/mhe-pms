@@ -6,8 +6,10 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ChecklistGroupController;
 use App\Http\Controllers\ChecklistItemController;
+use App\Http\Controllers\ClearDataController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DistrictController;
+use App\Http\Controllers\DowntimeMigrationToolController;
 use App\Http\Controllers\MheCategoryController;
 use App\Http\Controllers\MheDowntimeActionPlanConfirmationController;
 use App\Http\Controllers\MheDowntimeActionPlanController;
@@ -56,6 +58,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('pms/lookup-site', [PmsController::class, 'lookupSite'])->name('pms.lookup-site');
         Route::get('pms/search-units', [PmsController::class, 'searchUnits'])->name('pms.search-units');
         Route::get('pms/lookup-unit', [PmsController::class, 'lookupUnit'])->name('pms.lookup-unit');
+        Route::get('pms/search-technicians', [PmsController::class, 'searchTechnicians'])->name('pms.search-technicians');
         Route::get('pms/create', [PmsController::class, 'create'])->name('pms.create');
         Route::post('pms', [PmsController::class, 'store'])->name('pms.store');
         Route::get('pms/{pms}/edit', [PmsController::class, 'edit'])->name('pms.edit');
@@ -285,6 +288,20 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('/test-connection', [UserMigrationToolController::class, 'testConnection'])->name('test-connection');
         Route::post('/preview', [UserMigrationToolController::class, 'preview'])->name('preview');
         Route::post('/import', [UserMigrationToolController::class, 'import'])->name('import');
+    });
+
+    Route::middleware('super-admin')->prefix('system/downtime-migration-tool')->name('system.downtime-migration-tool.')->group(function (): void {
+        Route::get('/', [DowntimeMigrationToolController::class, 'index'])->name('index');
+        Route::post('/test-connection', [DowntimeMigrationToolController::class, 'testConnection'])->name('test-connection');
+        Route::get('/sites', [DowntimeMigrationToolController::class, 'sites'])->name('sites');
+        Route::post('/count', [DowntimeMigrationToolController::class, 'count'])->name('count');
+        Route::post('/preview', [DowntimeMigrationToolController::class, 'preview'])->name('preview');
+        Route::post('/migrate', [DowntimeMigrationToolController::class, 'migrate'])->name('migrate');
+    });
+
+    Route::middleware('super-admin')->prefix('system/clear-data')->name('system.clear-data.')->group(function (): void {
+        Route::get('/', [ClearDataController::class, 'index'])->name('index');
+        Route::post('/', [ClearDataController::class, 'clear'])->name('clear');
     });
 
     Route::middleware('permission:profile.manage')->group(function (): void {

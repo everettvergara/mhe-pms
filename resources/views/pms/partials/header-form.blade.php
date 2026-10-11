@@ -78,7 +78,7 @@
                 @if($readOnly)
                     <div class="small">{{ $pms->unit_number }}</div>
                 @else
-                    <select name="unit_number" id="pms_unit_number" class="form-select @error('unit_number') is-invalid @enderror" data-selected="{{ old('unit_number', $pms->unit_number) }}" required>
+                    <select name="unit_number" id="pms_unit_number" class="form-select form-select-sm @error('unit_number') is-invalid @enderror" data-selected="{{ old('unit_number', $pms->unit_number) }}" required>
                         <option value="">Select unit</option>
                     </select>
                     @error('unit_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -107,7 +107,23 @@
                 @if($readOnly)
                     <div class="small">{{ $pms->technician_name }}</div>
                 @else
-                    <input name="technician_name" class="form-control form-control-sm" value="{{ old('technician_name', $pms->technician_name) }}" required>
+                    <div class="suggest-field">
+                        <input name="technician_name"
+                               id="pms_technician_name"
+                               class="form-control form-control-sm suggest-field-input @error('technician_name') is-invalid @enderror"
+                               value="{{ old('technician_name', $pms->technician_name) }}"
+                               autocomplete="off"
+                               required>
+                        <button type="button" class="suggest-field-toggle" id="pms-technician-options-toggle" aria-label="Show technicians">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div id="pms-technician-options" class="suggest-menu">
+                            <button type="button" class="suggest-scroll-btn" data-scroll="-1" aria-label="Scroll up"><i class="bi bi-chevron-up"></i></button>
+                            <div id="pms-technician-options-list" class="suggest-menu-list"></div>
+                            <button type="button" class="suggest-scroll-btn" data-scroll="1" aria-label="Scroll down"><i class="bi bi-chevron-down"></i></button>
+                        </div>
+                    </div>
+                    @error('technician_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 @endif
             </div>
             @if(!$readOnly)
@@ -384,11 +400,84 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const technicianInput = document.getElementById('pms_technician_name');
+    const technicianMenu = document.getElementById('pms-technician-options');
+    const technicianMenuList = document.getElementById('pms-technician-options-list');
+    const technicianToggle = document.getElementById('pms-technician-options-toggle');
+    let technicianDebounceTimer = null;
+
+    const closeTechnicianMenu = () => technicianMenu?.classList.remove('is-open');
+
+    const openTechnicianMenu = () => {
+        if (!technicianMenu) return;
+        technicianMenu.classList.add('is-open');
+        requestAnimationFrame(() => {
+            const overflows = technicianMenuList.scrollHeight > technicianMenuList.clientHeight + 1;
+            technicianMenu.querySelectorAll('.suggest-scroll-btn').forEach((button) => {
+                button.hidden = !overflows;
+            });
+        });
+    };
+
+    const loadTechnicians = async (openMenu = true) => {
+        if (!technicianMenuList) return;
+        const params = new URLSearchParams();
+        const value = technicianInput?.value.trim() ?? '';
+        if (value) params.set('q', value);
+        const response = await fetch(`{{ route('pms.search-technicians') }}?${params.toString()}`);
+        const technicians = await response.json();
+        technicianMenuList.innerHTML = technicians.length
+            ? technicians.map((row) => `<button type="button" class="suggest-menu-item" data-label="${escapeAttr(row.label)}">${escapeAttr(row.label)}</button>`).join('')
+            : '<div class="suggest-menu-empty">No technicians found</div>';
+        if (openMenu) {
+            openTechnicianMenu();
+        }
+    };
+
+    technicianMenu?.addEventListener('mousedown', (event) => event.preventDefault());
+    technicianToggle?.addEventListener('mousedown', (event) => event.preventDefault());
+
+    technicianMenuList?.addEventListener('click', (event) => {
+        const item = event.target.closest('.suggest-menu-item');
+        if (!item || !technicianInput) return;
+        technicianInput.value = item.dataset.label;
+        closeTechnicianMenu();
+    });
+
+    technicianMenu?.querySelectorAll('[data-scroll]').forEach((button) => {
+        button.addEventListener('click', () => {
+            technicianMenuList?.scrollBy({ top: Number(button.dataset.scroll) * 72, behavior: 'smooth' });
+        });
+    });
+
+    technicianToggle?.addEventListener('click', () => {
+        if (technicianMenu?.classList.contains('is-open')) {
+            closeTechnicianMenu();
+            return;
+        }
+        loadTechnicians();
+    });
+
+    technicianInput?.addEventListener('input', () => {
+        clearTimeout(technicianDebounceTimer);
+        technicianDebounceTimer = setTimeout(() => loadTechnicians(), 250);
+    });
+
+    technicianInput?.addEventListener('focus', () => {
+        loadTechnicians();
+    });
+
+    technicianInput?.addEventListener('blur', () => {
+        closeTechnicianMenu();
+    });
+
     loadSites(false).then(async () => {
         await resolveSite();
         await loadUnits();
         await lookupUnit();
     });
+
+    loadTechnicians(false);
 });
 </script>
 @endpush

@@ -171,6 +171,53 @@ class PmsInventoryLookupTest extends TestCase
         $response->assertDontSee('pms-unit-numbers', false);
     }
 
+    public function test_search_technicians_returns_scoped_distinct_names(): void
+    {
+        PmsHeader::query()->create([
+            'pms_no' => 'PMS-TECH-001',
+            'supplier_id' => $this->supplier->id,
+            'site_id' => $this->site->id,
+            'technician_name' => 'Alpha Tech',
+            'date_from' => now(),
+            'date_to' => now()->addDay(),
+            'next_schedule_date' => now()->addMonth(),
+            'mhe_type_id' => $this->mheType->id,
+            'unit_number' => 'U-001',
+            'status' => PmsStatus::Draft,
+            'created_by' => $this->supplierUser->id,
+            'updated_by' => $this->supplierUser->id,
+        ]);
+
+        PmsHeader::query()->create([
+            'pms_no' => 'PMS-TECH-002',
+            'supplier_id' => $this->otherSupplier->id,
+            'site_id' => $this->site->id,
+            'technician_name' => 'Other Supplier Tech',
+            'date_from' => now(),
+            'date_to' => now()->addDay(),
+            'next_schedule_date' => now()->addMonth(),
+            'mhe_type_id' => $this->mheType->id,
+            'unit_number' => 'U-OTHER',
+            'status' => PmsStatus::Draft,
+            'created_by' => $this->supplierUser->id,
+            'updated_by' => $this->supplierUser->id,
+        ]);
+
+        $response = $this->actingAs($this->supplierUser)->getJson(route('pms.search-technicians'));
+
+        $response
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.label', 'Alpha Tech');
+
+        $filtered = $this->actingAs($this->supplierUser)->getJson(route('pms.search-technicians', ['q' => 'alpha']));
+
+        $filtered
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.label', 'Alpha Tech');
+    }
+
     public function test_create_form_leaves_site_blank_when_multiple_sites_are_assigned(): void
     {
         $secondSite = Site::query()->create([

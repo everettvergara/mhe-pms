@@ -56,16 +56,27 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($data['pms_waiting_implementation'] as $plan)
-                                <tr @if($plan->parentShowUrl()) data-href="{{ $plan->parentShowUrl() }}" @endif>
-                                    <td>{{ $plan->pmsDetail?->pmsHeader?->unit_number ?? '—' }}</td>
-                                    <td>{{ $plan->pmsDetail?->pmsHeader?->site?->site_name ?? '—' }}</td>
+                            @forelse($data['pms_waiting_implementation'] as $item)
+                                <tr @if($item->url) data-href="{{ $item->url }}" @endif>
+                                    <td>{{ $item->unit }}</td>
+                                    <td>{{ $item->site }}</td>
                                     <td>
-                                        <div>{{ $plan->action_plan_no }}</div>
-                                        <div class="text-muted small">{{ $plan->title }}</div>
+                                        @if($item->missing_action_plan)
+                                            <div>{{ $item->title }}</div>
+                                            <div class="text-muted small">No action plan</div>
+                                        @else
+                                            <div>{{ $item->action_plan_no }}</div>
+                                            <div class="text-muted small">{{ $item->title }}</div>
+                                        @endif
                                     </td>
-                                    <td>{{ $plan->timeline_to?->format('Y-m-d') ?? '—' }}</td>
-                                    <td><x-status-badge :status="$plan->status" /></td>
+                                    <td>{{ $item->due ?? '—' }}</td>
+                                    <td>
+                                        @if($item->missing_action_plan)
+                                            <span class="badge text-bg-danger">No action plan</span>
+                                        @else
+                                            <x-status-badge :status="$item->status" />
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr><td colspan="5" class="text-center text-muted py-3">None.</td></tr>
@@ -101,7 +112,7 @@
                     </a>
                 </div>
                 <div class="col-sm-6">
-                    <a href="{{ route('mhe-downtimes.index') }}" class="admin-stat admin-stat--dt-wait">
+                    <a href="#supplier-downtime-waiting" class="admin-stat admin-stat--dt-wait">
                         <span class="admin-stat__icon"><i class="bi bi-inbox"></i></span>
                         <span class="admin-stat__label">Waiting for my implementation</span>
                         <span class="admin-stat__value">{{ number_format($data['kpis']['downtime_waiting_implementation']) }}</span>
@@ -109,7 +120,7 @@
                 </div>
             </div>
 
-            <div class="card admin-dash-card admin-dash-card--down mb-0">
+            <div class="card admin-dash-card admin-dash-card--down mb-0" id="supplier-downtime-waiting">
                 <div class="card-header bg-white"><strong>Waiting for my implementation</strong></div>
                 <div class="table-responsive">
                     <table class="table table-hover table-sm mb-0">
@@ -123,13 +134,24 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($data['downtime_waiting_implementation'] as $plan)
-                                <tr @if($plan->parentShowUrl()) data-href="{{ $plan->parentShowUrl() }}" @endif>
-                                    <td>{{ $plan->mheDowntime?->mheInventory?->unit_no ?? $plan->mheDowntime?->ref_unit_no ?? '—' }}</td>
-                                    <td>{{ $plan->mheDowntime?->site?->site_name ?? '—' }}</td>
-                                    <td>{{ $plan->title }}</td>
-                                    <td>{{ $plan->timeline_to?->format('Y-m-d') ?? '—' }}</td>
-                                    <td><x-status-badge :status="$plan->status" /></td>
+                            @forelse($data['downtime_waiting_implementation'] as $item)
+                                <tr @if($item->url) data-href="{{ $item->url }}" @endif>
+                                    <td>{{ $item->unit }}</td>
+                                    <td>{{ $item->site }}</td>
+                                    <td>
+                                        <div>{{ $item->title }}</div>
+                                        @if($item->missing_action_plan)
+                                            <div class="text-muted small">No action plan</div>
+                                        @endif
+                                    </td>
+                                    <td>{{ $item->due ?? '—' }}</td>
+                                    <td>
+                                        @if($item->missing_action_plan)
+                                            <span class="badge text-bg-danger">No action plan</span>
+                                        @else
+                                            <x-status-badge :status="$item->status" />
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr><td colspan="5" class="text-center text-muted py-3">None.</td></tr>

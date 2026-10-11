@@ -346,6 +346,10 @@ class MheDowntimeController extends Controller
         if (! empty($filters['currently_down'])) {
             $query->currentlyDown();
         }
+
+        if (! empty($filters['legacy_batch'])) {
+            $query->where('legacy_import_batch_id', $filters['legacy_batch']);
+        }
     }
 
     protected function defaultSortColumn(): string
@@ -360,6 +364,6 @@ class MheDowntimeController extends Controller
 
     protected function searchableColumns(): array
     {
-        return ['title', 'ref_unit_no', 'root_cause', 'description'];
+        return ['title', 'ref_unit_no', 'root_cause', 'description', 'legacy_eagle_eye_id'];
     }
 }

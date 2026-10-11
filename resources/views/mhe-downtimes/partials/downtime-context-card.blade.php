@@ -13,6 +13,9 @@
     <div class="card-body">
         <dl class="row small mb-0">
             <dt class="col-sm-3">Downtime #</dt><dd class="col-sm-9">{{ $downtime->id }}</dd>
+            @if($downtime->legacy_eagle_eye_id)
+                <dt class="col-sm-3">FSC Web Ref</dt><dd class="col-sm-9"><span class="badge text-bg-info">#{{ $downtime->legacy_eagle_eye_id }}</span></dd>
+            @endif
             <dt class="col-sm-3">Site</dt><dd class="col-sm-9">{{ $downtime->site?->site_name }}</dd>
             <dt class="col-sm-3">Unit No.</dt><dd class="col-sm-9">{{ $downtime->ref_unit_no ?? $downtime->mheInventory?->unit_no ?? '—' }}</dd>
             <dt class="col-sm-3">Title</dt><dd class="col-sm-9">{{ $downtime->title }}</dd>

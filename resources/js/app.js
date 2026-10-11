@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initUserFormToggles();
     initAssignedSitesPicker();
     initSidebarToggle();
+    initDeferredPhotoUploads();
 });
 
 const jsonRequestHeaders = {
@@ -890,4 +891,118 @@ function initSidebarToggle() {
     });
 
     syncSidebarToggle();
+}
+
+function initDeferredPhotoUploads() {
+    document.querySelectorAll('[data-deferred-photo-upload]').forEach((wrapper) => {
+        const input = wrapper.querySelector('[data-deferred-photo-input]');
+        const preview = wrapper.querySelector('[data-photo-preview]');
+        const counter = wrapper.querySelector('[data-photo-count]');
+        const addLabel = wrapper.querySelector('[data-photo-add-label]');
+
+        if (!input || !preview) {
+            return;
+        }
+
+        const maxFiles = parseInt(wrapper.dataset.maxFiles || '10', 10);
+        let pendingFiles = [];
+        let objectUrls = [];
+
+        const revokeObjectUrls = () => {
+            objectUrls.forEach((url) => URL.revokeObjectURL(url));
+            objectUrls = [];
+        };
+
+        const syncInputFiles = () => {
+            const transfer = new DataTransfer();
+            pendingFiles.forEach((file) => transfer.items.add(file));
+            input.files = transfer.files;
+        };
+
+        const updateAddLabel = () => {
+            if (!addLabel) {
+                return;
+            }
+
+            addLabel.classList.toggle('d-none', pendingFiles.length >= maxFiles);
+        };
+
+        const updateCounter = () => {
+            if (!counter) {
+                return;
+            }
+
+            counter.textContent = `${pendingFiles.length} / ${maxFiles}`;
+        };
+
+        const renderPreview = () => {
+            revokeObjectUrls();
+            preview.replaceChildren();
+
+            if (pendingFiles.length === 0) {
+                preview.classList.add('d-none');
+                updateCounter();
+                updateAddLabel();
+                syncInputFiles();
+                return;
+            }
+
+            preview.classList.remove('d-none');
+
+            pendingFiles.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                objectUrls.push(url);
+
+                const item = document.createElement('div');
+                item.className = 'attachment-item';
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.title = file.name;
+                link.className = 'attachment-thumb-link';
+
+                const image = document.createElement('img');
+                image.src = url;
+                image.alt = file.name;
+                image.className = 'attachment-thumb';
+                link.appendChild(image);
+
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'attachment-delete-btn';
+                removeButton.title = 'Remove';
+                removeButton.innerHTML = '<i class="bi bi-x" aria-hidden="true"></i>';
+                removeButton.addEventListener('click', () => {
+                    pendingFiles = pendingFiles.filter((_, fileIndex) => fileIndex !== index);
+                    renderPreview();
+                });
+
+                const deleteWrap = document.createElement('div');
+                deleteWrap.className = 'attachment-delete-form';
+                deleteWrap.appendChild(removeButton);
+
+                item.appendChild(link);
+                item.appendChild(deleteWrap);
+                preview.appendChild(item);
+            });
+
+            updateCounter();
+            updateAddLabel();
+            syncInputFiles();
+        };
+
+        input.addEventListener('change', () => {
+            const selected = Array.from(input.files || []);
+            if (selected.length === 0) {
+                return;
+            }
+
+            const merged = [...pendingFiles, ...selected];
+            pendingFiles = merged.slice(0, maxFiles);
+            input.value = '';
+            renderPreview();
+        });
+    });
 }

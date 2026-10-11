@@ -338,6 +338,138 @@ class DashboardDowntimeQueueTest extends TestCase
         $response->assertDontSee($withPlan->title, false);
     }
 
+    public function test_supplier_dashboard_includes_posted_downtime_with_no_action_plan(): void
+    {
+        $down = $this->createPostedDowntime($this->site, 'Still needs a plan', 'FL-010');
+        $backUp = $this->createPostedDowntime($this->site, 'Back up needs a plan', 'FL-011');
+        $backUp->update(['uptime' => now()]);
+
+        $draft = $this->createPostedDowntime($this->site, 'Draft needs a plan', 'FL-012');
+        $draft->update([
+            'status' => DowntimeStatus::Draft,
+            'posted_at' => null,
+            'posted_by' => null,
+        ]);
+
+        $cancelled = $this->createPostedDowntime($this->site, 'Cancelled needs a plan', 'FL-013');
+        $cancelled->update(['status' => DowntimeStatus::Cancelled]);
+
+        $confirmedOnly = $this->createPostedDowntime($this->site, 'Confirmed only', 'FL-014');
+        $confirmedOnly->actionPlans()->create($this->downtimePlan('DT-ONLY-CONFIRMED', 'Confirmed only fix', DowntimeActionPlanStatus::Confirmed));
+
+        $pending = $this->createPostedDowntime($this->site, 'Has pending plan', 'FL-015');
+        $pendingPlan = $pending->actionPlans()->create($this->downtimePlan('DT-HAS-PENDING', 'Pending fix', DowntimeActionPlanStatus::Pending));
+        $pendingPlan->update(['timeline_to' => now()->subDay()->toDateString()]);
+
+        $this->createPostedDowntime($this->otherSite, 'Other site needs a plan', 'FL-016');
+        $otherSupplier = $this->createPostedDowntime($this->site, 'Other supplier needs a plan', 'FL-017');
+        $otherSupplier->update(['supplier_id' => $this->createOtherSupplier()->id]);
+
+        $data = app(DashboardService::class)->forSupplier($this->siteUser);
+        $rows = $data['downtime_waiting_implementation'];
+
+        $this->assertSame(3, $data['kpis']['downtime_waiting_implementation']);
+        $this->assertSame(
+            ['Still needs a plan', 'Back up needs a plan', 'Pending fix'],
+            $rows->pluck('title')->all(),
+        );
+        $this->assertTrue($rows[0]->missing_action_plan);
+        $this->assertTrue($rows[1]->missing_action_plan);
+        $this->assertFalse($rows[2]->missing_action_plan);
+        $this->assertNull($rows[0]->action_plan_no);
+        $this->assertSame('DT-HAS-PENDING', $rows[2]->action_plan_no);
+        $this->assertSame('FL-010', $rows[0]->unit);
+        $this->assertSame('Site One', $rows[0]->site);
+        $this->assertSame(route('mhe-downtimes.show', $down), $rows[0]->url);
+        $this->assertNotContains('Has pending plan', $rows->pluck('title')->all());
+
+        $response = $this->actingAs($this->siteUser)->get(route('dashboard'));
+        $response->assertOk();
+        $response->assertSee('Still needs a plan', false);
+        $response->assertSee('No action plan', false);
+        $response->assertSee('#supplier-downtime-waiting', false);
+        $response->assertDontSee('Draft needs a plan', false);
+        $response->assertDontSee('Cancelled needs a plan', false);
+        $response->assertDontSee('Confirmed only fix', false);
+        $response->assertDontSee('Other site needs a plan', false);
+        $response->assertDontSee('Other supplier needs a plan', false);
+    }
+
+    public function test_supplier_dashboard_includes_pms_with_no_good_line_and_no_action_item(): void
+    {
+        $draft = $this->createPms('PMS-DRAFT-NONE', 'U-DRAFT-NONE', PmsStatus::Draft);
+        $this->createDetail($draft, 'Draft leak');
+
+        $findings = $this->createPms('PMS-FINDINGS-NONE', 'U-FINDINGS-NONE', PmsStatus::WithFindings);
+        $this->createDetail($findings, 'Finding leak');
+
+        $good = $this->createPms('PMS-GOOD', 'U-GOOD', PmsStatus::Draft);
+        $goodDetail = $this->createDetail($good, 'Looks fine');
+        $goodDetail->update(['answer' => ChecklistAnswer::Good]);
+
+        $this->createPms('PMS-CLEAN', 'U-CLEAN', PmsStatus::NoFindings);
+
+        $cancelled = $this->createPms('PMS-CANCEL-NONE', 'U-CANCEL', PmsStatus::Cancelled);
+        $this->createDetail($cancelled, 'Cancelled leak');
+
+        $partial = $this->createPms('PMS-PARTIAL', 'U-PARTIAL', PmsStatus::Draft);
+        $covered = $this->createDetail($partial, 'Covered leak');
+        $this->createActionPlan($covered, ActionPlanStatus::Pending, 'AP-PARTIAL');
+        $this->createDetail($partial, 'Uncovered leak');
+
+        $other = $this->createPms('PMS-OTHER-NONE', 'U-OTHER-NONE', PmsStatus::Draft, now(), $this->otherSite->id);
+        $this->createDetail($other, 'Other site leak');
+
+        $data = app(DashboardService::class)->forSupplier($this->siteUser);
+        $rows = $data['pms_waiting_implementation'];
+
+        $this->assertSame(4, $data['kpis']['pms_waiting_implementation']);
+        $this->assertEqualsCanonicalizing(
+            ['PMS-DRAFT-NONE', 'PMS-FINDINGS-NONE', 'PMS-PARTIAL'],
+            $rows->where('missing_action_plan', true)->pluck('title')->all(),
+        );
+        $this->assertSame(
+            ['AP-PARTIAL'],
+            $rows->where('missing_action_plan', false)->pluck('action_plan_no')->all(),
+        );
+        $this->assertFalse($rows->last()->missing_action_plan);
+
+        $partialRow = $rows->firstWhere('title', 'PMS-PARTIAL');
+        $this->assertNotNull($partialRow);
+        $this->assertTrue($partialRow->missing_action_plan);
+        $this->assertSame('U-PARTIAL', $partialRow->unit);
+        $this->assertSame(route('pms.show', $partial), $partialRow->url);
+
+        $response = $this->actingAs($this->siteUser)->get(route('dashboard'));
+        $response->assertOk();
+        $response->assertSee('PMS-DRAFT-NONE', false);
+        $response->assertSee('No action plan', false);
+        $response->assertDontSee('PMS-GOOD', false);
+        $response->assertDontSee('PMS-CLEAN', false);
+        $response->assertDontSee('PMS-CANCEL-NONE', false);
+        $response->assertDontSee('PMS-OTHER-NONE', false);
+    }
+
+    public function test_supplier_dashboard_caps_missing_downtime_rows_at_ten(): void
+    {
+        foreach (range(1, 11) as $i) {
+            $downtime = $this->createPostedDowntime($this->site, 'Missing '.$i, 'FL-'.str_pad((string) $i, 3, '0', STR_PAD_LEFT));
+            $downtime->update(['date_of_incident' => now()->subDays(12 - $i)]);
+        }
+
+        $data = app(DashboardService::class)->forSupplier($this->siteUser);
+
+        $this->assertSame(11, $data['kpis']['downtime_waiting_implementation']);
+        $this->assertCount(10, $data['downtime_waiting_implementation']);
+        $this->assertSame('Missing 1', $data['downtime_waiting_implementation']->first()->title);
+        $this->assertTrue($data['downtime_waiting_implementation']->every(
+            fn ($item): bool => $item->missing_action_plan,
+        ));
+        $this->assertFalse($data['downtime_waiting_implementation']->contains(
+            fn ($item): bool => $item->title === 'Missing 11',
+        ));
+    }
+
     protected function createPostedDowntime(Site $site, string $title = 'Broken mast', string $unitNo = 'FL-001'): MheDowntime
     {
         return MheDowntime::query()->create([

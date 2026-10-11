@@ -90,16 +90,6 @@
             </form>
         @endif
 
-        <div class="d-flex flex-wrap gap-2">
-            @if($canManagePlan && $plan->status !== \App\Enums\DowntimeActionPlanStatus::Cancelled && $plan->status !== \App\Enums\DowntimeActionPlanStatus::Confirmed)
-                <form method="POST" action="{{ route('mhe-downtimes.action-plans.cancel', [$downtime, $plan]) }}" onsubmit="return confirm('Cancel this action item?')">
-                    @csrf
-                    @if($returnTo)<input type="hidden" name="return_to" value="{{ $returnTo }}">@endif
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
-                </form>
-            @endif
-        </div>
-
         @if(auth()->user()->can('confirm', $plan) && $plan->status === \App\Enums\DowntimeActionPlanStatus::WaitingForFastConfirmation)
             <div class="d-flex flex-wrap gap-2 mt-3 align-items-end">
                 <form method="POST" action="{{ route('mhe-downtime-action-plan-confirmations.confirm', $plan) }}" class="d-flex flex-wrap gap-2 align-items-end" onsubmit="return confirm('Confirm this action item?')">

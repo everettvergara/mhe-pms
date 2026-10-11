@@ -97,10 +97,16 @@ class FscDistrictUserImportService
     }
 
     /**
+     * @param  array{legacy_ids?: list<int>, site_codes_by_legacy_id?: array<int, list<string>>}|null  $selection
      * @return array<string, int|list<int>>
      */
-    public function import(PDO $pdo, string $token, bool $deactivate, ?int $operatorId = null): array
-    {
+    public function import(
+        PDO $pdo,
+        string $token,
+        bool $deactivate,
+        ?int $operatorId = null,
+        ?array $selection = null,
+    ): array {
         $payload = FscDistrictImportToken::parse($token);
         $districtCodes = $this->normalizeDistrictCodes($payload['districts'] ?? []);
         $this->assertDistrictsExist($pdo, $districtCodes);
@@ -119,6 +125,12 @@ class FscDistrictUserImportService
             throw new InvalidArgumentException('No users to import.');
         }
 
+        $toImport = $this->resolveImportRows($importable, $selection);
+
+        if ($toImport === []) {
+            throw new InvalidArgumentException('Select at least one user to import.');
+        }
+
         if ($deactivate && ! config('fsc_web_import.allow_source_deactivate')) {
             throw new InvalidArgumentException('Deactivating users in fsc_web is disabled. Set FSC_WEB_IMPORT_ALLOW_SOURCE_DEACTIVATE=true first.');
         }
@@ -126,8 +138,8 @@ class FscDistrictUserImportService
         $roleId = Role::query()->where('slug', Role::SLUG_FAST_ADMINISTRATOR)->firstOrFail()->id;
         $createdLegacyIds = [];
 
-        DB::transaction(function () use ($importable, $roleId, $operatorId, &$createdLegacyIds): void {
-            foreach ($importable as $row) {
+        DB::transaction(function () use ($toImport, $roleId, $operatorId, &$createdLegacyIds): void {
+            foreach ($toImport as $row) {
                 if ($this->usernameExists($row['code'])) {
                     throw new InvalidArgumentException('A user appeared in mhe-pms after preview. Run preview again.');
                 }
@@ -303,9 +315,17 @@ class FscDistrictUserImportService
 
             $mappedIds = [];
             $unmapped = [];
+            $sites = [];
 
             foreach ($inCodes as $siteCode) {
-                if (isset($siteIdsByCode[$siteCode])) {
+                $mapped = isset($siteIdsByCode[$siteCode]);
+                $sites[] = [
+                    'code' => $siteCode,
+                    'site_id' => $mapped ? (int) $siteIdsByCode[$siteCode] : null,
+                    'mapped' => $mapped,
+                ];
+
+                if ($mapped) {
                     $mappedIds[] = (int) $siteIdsByCode[$siteCode];
                 } else {
                     $unmapped[] = $siteCode;
@@ -319,6 +339,7 @@ class FscDistrictUserImportService
                 'code' => $user['code'],
                 'name' => $user['name'],
                 'status' => $status,
+                'sites' => $sites,
                 'site_codes' => $inCodes,
                 'site_ids' => $mappedIds,
                 'unmapped_site_codes' => $unmapped,
@@ -420,6 +441,82 @@ class FscDistrictUserImportService
     protected function countStatus(array $rows, string $status): int
     {
         return count(array_filter($rows, fn (array $row): bool => $row['status'] === $status));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $importable
+     * @param  array{legacy_ids?: list<int>, site_codes_by_legacy_id?: array<int, list<string>>}|null  $selection
+     * @return list<array<string, mixed>>
+     */
+    public function resolveImportRows(array $importable, ?array $selection): array
+    {
+        if ($selection === null) {
+            return $importable;
+        }
+
+        $legacyIds = $selection['legacy_ids'] ?? [];
+        $siteCodesByLegacyId = $selection['site_codes_by_legacy_id'] ?? [];
+
+        $importableByLegacyId = [];
+
+        foreach ($importable as $row) {
+            $importableByLegacyId[$row['legacy_id']] = $row;
+        }
+
+        $resolved = [];
+
+        foreach ($legacyIds as $legacyId) {
+            $legacyId = (int) $legacyId;
+
+            if (! isset($importableByLegacyId[$legacyId])) {
+                throw new InvalidArgumentException('Invalid user selection. Run preview again.');
+            }
+
+            $row = $importableByLegacyId[$legacyId];
+            $selectedCodes = $siteCodesByLegacyId[$legacyId] ?? [];
+            $siteIds = $this->siteIdsForSelectedCodes($row, $selectedCodes);
+
+            $resolved[] = [
+                ...$row,
+                'site_ids' => $siteIds,
+            ];
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @param  list<string>  $selectedCodes
+     * @return list<int>
+     */
+    protected function siteIdsForSelectedCodes(array $row, array $selectedCodes): array
+    {
+        if ($selectedCodes === []) {
+            return [];
+        }
+
+        $allowedByCode = [];
+
+        foreach ($row['sites'] as $site) {
+            if ($site['mapped'] && $site['site_id'] !== null) {
+                $allowedByCode[$site['code']] = (int) $site['site_id'];
+            }
+        }
+
+        $siteIds = [];
+
+        foreach ($selectedCodes as $code) {
+            $code = trim((string) $code);
+
+            if ($code === '' || ! isset($allowedByCode[$code])) {
+                throw new InvalidArgumentException('Invalid site selection for user '.$row['code'].'. Run preview again.');
+            }
+
+            $siteIds[] = $allowedByCode[$code];
+        }
+
+        return array_values(array_unique($siteIds));
     }
 
     /**

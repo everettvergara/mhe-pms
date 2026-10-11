@@ -150,6 +150,85 @@ class UserMigrationToolTest extends TestCase
         $this->assertSame(0, (int) $pdo->query("SELECT is_active FROM tb_sys_mf_user WHERE code = 'newone'")->fetchColumn());
     }
 
+    public function test_import_with_selection_can_limit_users_and_sites(): void
+    {
+        $district = District::query()->firstOrFail();
+
+        $cabuyao = Site::query()->create([
+            'district_id' => $district->id,
+            'site_code' => 'CABUYAO',
+            'site_name' => 'Cabuyao',
+            'status' => RecordStatus::Active,
+        ]);
+
+        Site::query()->create([
+            'district_id' => $district->id,
+            'site_code' => 'LAGUNA',
+            'site_name' => 'Laguna',
+            'status' => RecordStatus::Active,
+        ]);
+
+        $pdo = $this->eagleEyeWithTwoImportableUsers();
+        $service = app(FscDistrictUserImportService::class);
+        $preview = $service->preview($pdo, ['District 5'], ['host' => 'sqlite', 'database' => 'memory', 'username' => 'test']);
+
+        $byCode = collect($preview['users'])->keyBy('code');
+        $this->assertSame(FscDistrictUserImportService::STATUS_WILL_IMPORT, $byCode['newone']['status']);
+        $this->assertSame(FscDistrictUserImportService::STATUS_WILL_IMPORT, $byCode['newtwo']['status']);
+
+        $newoneId = $byCode['newone']['legacy_id'];
+        $selection = [
+            'legacy_ids' => [$newoneId],
+            'site_codes_by_legacy_id' => [
+                $newoneId => ['CABUYAO'],
+            ],
+        ];
+
+        $service->import($pdo, $preview['preview_token'], false, null, $selection);
+
+        $this->assertNull(User::query()->where('username', 'newtwo')->first());
+        $imported = User::query()->where('username', 'newone')->firstOrFail();
+        $this->assertEquals([$cabuyao->id], $imported->sites()->pluck('sites.id')->all());
+    }
+
+    public function test_import_selected_user_with_no_sites_checked_creates_user_without_sites(): void
+    {
+        $district = District::query()->firstOrFail();
+
+        Site::query()->create([
+            'district_id' => $district->id,
+            'site_code' => 'CABUYAO',
+            'site_name' => 'Cabuyao',
+            'status' => RecordStatus::Active,
+        ]);
+
+        $pdo = $this->eagleEye();
+        $service = app(FscDistrictUserImportService::class);
+        $preview = $service->preview($pdo, ['District 5'], ['host' => 'sqlite', 'database' => 'memory', 'username' => 'test']);
+        $legacyId = collect($preview['users'])->firstWhere('code', 'newone')['legacy_id'];
+
+        $service->import($pdo, $preview['preview_token'], false, null, [
+            'legacy_ids' => [$legacyId],
+            'site_codes_by_legacy_id' => [$legacyId => []],
+        ]);
+
+        $imported = User::query()->where('username', 'newone')->firstOrFail();
+        $this->assertSame([], $imported->sites()->pluck('sites.id')->all());
+    }
+
+    public function test_http_import_requires_at_least_one_selected_user(): void
+    {
+        $admin = User::factory()->create(['username' => 'admin']);
+
+        $this->actingAs($admin)
+            ->from(route('system.user-migration-tool.index'))
+            ->post(route('system.user-migration-tool.import'), [
+                'preview_token' => 'invalid',
+                'confirmation' => config('fsc_web_import.confirmation_phrase'),
+            ])
+            ->assertSessionHasErrors('import_users');
+    }
+
     protected function eagleEye(): PDO
     {
         $pdo = new PDO('sqlite::memory:');
@@ -169,6 +248,29 @@ class UserMigrationToolTest extends TestCase
         $pdo->exec("INSERT INTO tb_sys_mf_user (id, code, name, is_active) VALUES (1, 'newone', 'New One', 1), (2, 'keepme', 'Keep Me', 1), (3, 'safetyonly', 'Safety Only', 1)");
         $pdo->exec('INSERT INTO tb_sys_mf_user_access_type (id, user_id, access_type_id) VALUES (1, 1, 10), (2, 2, 10), (3, 3, 3)');
         $pdo->exec('INSERT INTO tb_sys_mf_user_site (id, user_id, site_id) VALUES (1, 1, 10), (2, 1, 11), (3, 2, 10), (4, 3, 10)');
+
+        return $pdo;
+    }
+
+    protected function eagleEyeWithTwoImportableUsers(): PDO
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec(<<<'SQL'
+            CREATE TABLE tb_fin_mf_district (id INTEGER PRIMARY KEY, code TEXT, name TEXT, is_active INTEGER);
+            CREATE TABLE tb_fin_mf_site (id INTEGER PRIMARY KEY, code TEXT, name TEXT, district_id INTEGER);
+            CREATE TABLE tb_sys_mf_user (id INTEGER PRIMARY KEY, code TEXT, name TEXT, is_active INTEGER);
+            CREATE TABLE tb_sys_mf_user_site (id INTEGER PRIMARY KEY, user_id INTEGER, site_id INTEGER);
+            CREATE TABLE tb_sys_mf_access_type (id INTEGER PRIMARY KEY, code TEXT);
+            CREATE TABLE tb_sys_mf_user_access_type (id INTEGER PRIMARY KEY, user_id INTEGER, access_type_id INTEGER);
+        SQL);
+
+        $pdo->exec("INSERT INTO tb_fin_mf_district (id, code, name, is_active) VALUES (5, 'District 5', 'District 5', 1)");
+        $pdo->exec("INSERT INTO tb_fin_mf_site (id, code, name, district_id) VALUES (10, 'CABUYAO', 'Cabuyao', 5), (12, 'LAGUNA', 'Laguna', 5)");
+        $pdo->exec("INSERT INTO tb_sys_mf_access_type (id, code) VALUES (10, 'MHE Transaction')");
+        $pdo->exec("INSERT INTO tb_sys_mf_user (id, code, name, is_active) VALUES (1, 'newone', 'New One', 1), (4, 'newtwo', 'New Two', 1)");
+        $pdo->exec('INSERT INTO tb_sys_mf_user_access_type (id, user_id, access_type_id) VALUES (1, 1, 10), (4, 4, 10)');
+        $pdo->exec('INSERT INTO tb_sys_mf_user_site (id, user_id, site_id) VALUES (1, 1, 10), (2, 1, 12), (5, 4, 10)');
 
         return $pdo;
     }

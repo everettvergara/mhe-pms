@@ -342,4 +342,30 @@ class PmsService
             }
         }
     }
+
+    /**
+     * @return array<int, array{label: string}>
+     */
+    public function searchTechnicians(User $user, ?string $term = null, int $limit = 50): array
+    {
+        $query = PmsHeader::query()
+            ->whereNotNull('technician_name')
+            ->where('technician_name', '!=', '');
+
+        $this->userDataScopeService->scopePmsHeader($query, $user);
+
+        $term = $term !== null ? trim($term) : '';
+        if ($term !== '') {
+            $query->where('technician_name', 'like', '%'.$term.'%');
+        }
+
+        return $query
+            ->distinct()
+            ->orderBy('technician_name')
+            ->limit($limit)
+            ->pluck('technician_name')
+            ->map(fn (string $name) => ['label' => $name])
+            ->values()
+            ->all();
+    }
 }

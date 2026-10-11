@@ -506,6 +506,23 @@ dl dt,
     font-size: var(--app-label-size);
 }
 
+body.app-body,
+body.app-body .modal-content {
+    color-scheme: light;
+}
+
+body.app-body .form-select,
+body.app-body select.form-select {
+    background-color: #fff;
+    color: #212529;
+}
+
+body.app-body input[type='date'],
+body.app-body input[type='datetime-local'],
+body.app-body input[type='month'] {
+    color-scheme: light;
+}
+
 .btn {
     font-size: var(--app-label-size);
 }

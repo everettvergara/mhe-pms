@@ -15,6 +15,7 @@ return [
         1 => 'Draft',
         2 => 'Posted',
         3 => 'Cancelled',
+        4 => 'Posted',
     ],
 
     'action_plan_status_map' => [

@@ -110,6 +110,7 @@ class ImportFscWebCommand extends Command
             MheDowntimeImportSource::EagleEyeSqlDump => [
                 'sql_file' => $this->option('sql-file'),
             ],
+            MheDowntimeImportSource::FscWebTool => throw new \RuntimeException('Use the Migrate MHE Downtime Data page for this source.'),
         };
     }
 }

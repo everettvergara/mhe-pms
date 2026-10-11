@@ -443,6 +443,17 @@ class MheDowntimeTest extends TestCase
 
     }
 
+    public function test_create_form_includes_deferred_photo_preview_markup(): void
+    {
+        $response = $this->actingAs($this->siteUser)->get(route('mhe-downtimes.create'));
+
+        $response->assertOk();
+        $response->assertSee('data-deferred-photo-upload', false);
+        $response->assertSee('data-photo-preview', false);
+        $response->assertSee('data-deferred-photo-input', false);
+        $response->assertSee('id="file-downtime-new"', false);
+    }
+
     public function test_create_form_leaves_site_blank_when_multiple_sites_are_assigned(): void
     {
 
@@ -979,6 +990,28 @@ class MheDowntimeTest extends TestCase
 
         $this->assertSame(1, $downtime->fresh()->attachments()->count());
 
+    }
+
+    public function test_draft_show_renders_uploaded_photo_thumbnail(): void
+    {
+        Storage::fake('public');
+
+        $downtime = $this->createDraftDowntime();
+        $path = UploadedFile::fake()->image('on-record.jpg')->store('mhe-downtime-attachments/'.$downtime->id, 'public');
+
+        $downtime->attachments()->create([
+            'file_path' => $path,
+            'original_filename' => 'on-record.jpg',
+            'mime_type' => 'image/jpeg',
+            'file_size' => 1024,
+            'created_by' => $this->siteUser->id,
+        ]);
+
+        $response = $this->actingAs($this->siteUser)->get(route('mhe-downtimes.show', $downtime));
+
+        $response->assertOk();
+        $response->assertSee('attachment-thumb', false);
+        $response->assertSee(Storage::disk('public')->url($path), false);
     }
 
     public function test_supplier_cannot_save_posted_downtime(): void

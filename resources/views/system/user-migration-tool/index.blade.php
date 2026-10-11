@@ -5,7 +5,7 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <p class="mb-2">Imports active <strong>MHE Transaction</strong> users from fsc_web for the districts you select. New users are created in mhe-pms as Active FAST Administrators. Password is the username. Site access is copied from that user's own sites inside the selected districts.</p>
+        <p class="mb-2">Imports active <strong>MHE Transaction</strong> users from fsc_web for the districts you select. New users are created in mhe-pms as Active FAST Administrators. Password is the username. Choose which users to import and which of their in-district fsc_web sites (matched in mhe-pms) to copy.</p>
         <p class="mb-0 text-muted">Users that already exist in mhe-pms stay in the preview and are not imported. Run preview before import.</p>
     </div>
 </div>
@@ -65,74 +65,145 @@
         <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Also assigned outside</div><div class="fs-4">{{ $preview['metrics']['users_outside_district'] }}</div></div></div></div>
     </div>
 
-    <div class="card mb-3">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Access after import</th>
-                        <th>Sites to copy</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($preview['users'] as $user)
-                        <tr @class(['text-muted' => $user['status'] !== 'will_import'])>
-                            <td>{{ $user['legacy_id'] }}</td>
-                            <td>{{ $user['code'] }}</td>
-                            <td>{{ $user['name'] }}</td>
-                            <td>
-                                @if($user['status'] === 'will_import')
-                                    FAST Administrator, Active
-                                @else
-                                    —
-                                @endif
-                            </td>
-                            <td>
-                                {{ $user['site_codes'] === [] ? '—' : implode(', ', $user['site_codes']) }}
-                                @if($user['unmapped_site_codes'] !== [])
-                                    <div class="small text-danger">Not in mhe-pms: {{ implode(', ', $user['unmapped_site_codes']) }}</div>
-                                @endif
-                                @if($user['outside_site_codes'] !== [])
-                                    <div class="small">Also assigned outside selected districts: {{ implode(', ', $user['outside_site_codes']) }}</div>
-                                @endif
-                            </td>
-                            <td>
-                                @switch($user['status'])
-                                    @case('will_import')
-                                        <span class="badge text-bg-success">Will import</span>
-                                        @break
-                                    @case('already_exists')
-                                        <span class="badge text-bg-warning">Already exists — will not be imported</span>
-                                        @break
-                                    @case('email_conflict')
-                                        <span class="badge text-bg-warning">Email conflict — will not be imported</span>
-                                        @break
-                                    @case('no_matching_sites')
-                                        <span class="badge text-bg-warning">No matching sites — will not be imported</span>
-                                        @break
-                                    @default
-                                        <span class="badge text-bg-warning">Username too long — will not be imported</span>
-                                @endswitch
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">No MHE Transaction users found for the selected districts.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+    @php
+        $defaultImportUserIds = collect($preview['users'])
+            ->where('status', 'will_import')
+            ->pluck('legacy_id')
+            ->all();
+        $selectedImportUserIds = array_map('intval', (array) old('import_users', $defaultImportUserIds));
+    @endphp
 
     @if($preview['metrics']['users_will_import'] > 0)
-        <div class="card">
-            <div class="card-body">
-                <form method="POST" action="{{ route('system.user-migration-tool.import') }}" class="row g-3">
-                    @csrf
-                    <input type="hidden" name="preview_token" value="{{ $preview['preview_token'] }}">
+        <form method="POST" action="{{ route('system.user-migration-tool.import') }}" data-user-migration-import>
+            @csrf
+            <input type="hidden" name="preview_token" value="{{ $preview['preview_token'] }}">
+
+            <div class="card mb-3">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 3rem;">
+                                    <input
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        id="import-users-select-all"
+                                        data-import-select-all
+                                        title="Select all eligible users"
+                                    >
+                                </th>
+                                <th>Id</th>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Access after import</th>
+                                <th>Sites to copy</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($preview['users'] as $user)
+                                @php
+                                    $canImport = $user['status'] === 'will_import';
+                                    $defaultSiteCodes = collect($user['sites'] ?? [])
+                                        ->where('mapped', true)
+                                        ->pluck('code')
+                                        ->all();
+                                    $oldSitesForUser = old('import_sites.'.$user['legacy_id']);
+                                    $checkedSiteCodes = $oldSitesForUser !== null
+                                        ? (array) $oldSitesForUser
+                                        : $defaultSiteCodes;
+                                    $userChecked = $canImport && in_array($user['legacy_id'], $selectedImportUserIds, true);
+                                @endphp
+                                <tr @class(['text-muted' => ! $canImport]) data-import-user-row @if($canImport) data-import-eligible @endif>
+                                    <td class="text-center align-middle">
+                                        @if($canImport)
+                                            <input
+                                                type="checkbox"
+                                                class="form-check-input import-user-checkbox"
+                                                name="import_users[]"
+                                                value="{{ $user['legacy_id'] }}"
+                                                data-import-user
+                                                @checked($userChecked)
+                                            >
+                                        @endif
+                                    </td>
+                                    <td>{{ $user['legacy_id'] }}</td>
+                                    <td>{{ $user['code'] }}</td>
+                                    <td>{{ $user['name'] }}</td>
+                                    <td>
+                                        @if($canImport)
+                                            FAST Administrator, Active
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(($user['sites'] ?? []) === [])
+                                            —
+                                        @else
+                                            <div class="d-flex flex-column gap-1">
+                                                @foreach($user['sites'] as $site)
+                                                    <div class="form-check mb-0">
+                                                        <input
+                                                            type="checkbox"
+                                                            class="form-check-input import-site-checkbox"
+                                                            name="import_sites[{{ $user['legacy_id'] }}][]"
+                                                            value="{{ $site['code'] }}"
+                                                            id="import_site_{{ $user['legacy_id'] }}_{{ $site['code'] }}"
+                                                            data-import-site
+                                                            data-import-user-id="{{ $user['legacy_id'] }}"
+                                                            @checked(in_array($site['code'], $checkedSiteCodes, true))
+                                                            @disabled(! $site['mapped'] || ! $canImport)
+                                                        >
+                                                        <label
+                                                            class="form-check-label @unless($site['mapped']) text-danger @endunless"
+                                                            for="import_site_{{ $user['legacy_id'] }}_{{ $site['code'] }}"
+                                                        >
+                                                            {{ $site['code'] }}
+                                                            @unless($site['mapped'])
+                                                                <span class="small">(not in mhe-pms)</span>
+                                                            @endunless
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if($user['outside_site_codes'] !== [])
+                                            <div class="small mt-1">Also assigned outside selected districts: {{ implode(', ', $user['outside_site_codes']) }}</div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @switch($user['status'])
+                                            @case('will_import')
+                                                <span class="badge text-bg-success">Will import</span>
+                                                @break
+                                            @case('already_exists')
+                                                <span class="badge text-bg-warning">Already exists — will not be imported</span>
+                                                @break
+                                            @case('email_conflict')
+                                                <span class="badge text-bg-warning">Email conflict — will not be imported</span>
+                                                @break
+                                            @case('no_matching_sites')
+                                                <span class="badge text-bg-warning">No matching sites — will not be imported</span>
+                                                @break
+                                            @default
+                                                <span class="badge text-bg-warning">Username too long — will not be imported</span>
+                                        @endswitch
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="7" class="text-center text-muted py-4">No MHE Transaction users found for the selected districts.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @error('import_users')
+                    <div class="card-body pt-0 text-danger small">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="card">
+                <div class="card-body row g-3">
                     <div class="col-12">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="deactivate" value="1" id="deactivate" @checked(old('deactivate', $allowDeactivate)) @disabled(! $allowDeactivate)>
@@ -150,11 +221,124 @@
                         @enderror
                     </div>
                     <div class="col-12">
-                        <button type="submit" class="btn btn-danger">Import {{ $preview['metrics']['users_will_import'] }} user(s)</button>
+                        <button type="submit" class="btn btn-danger" data-import-submit>
+                            Import <span data-import-count>{{ count(array_intersect($selectedImportUserIds, $defaultImportUserIds)) }}</span> user(s)
+                        </button>
                     </div>
-                </form>
+                </div>
+            </div>
+        </form>
+    @else
+        <div class="card mb-3">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Access after import</th>
+                            <th>Sites to copy</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($preview['users'] as $user)
+                            <tr class="text-muted">
+                                <td>{{ $user['legacy_id'] }}</td>
+                                <td>{{ $user['code'] }}</td>
+                                <td>{{ $user['name'] }}</td>
+                                <td>—</td>
+                                <td>
+                                    @if(($user['sites'] ?? []) === [])
+                                        —
+                                    @else
+                                        {{ implode(', ', array_column($user['sites'], 'code')) }}
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge text-bg-warning">{{ $user['status'] }}</span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="text-center text-muted py-4">No MHE Transaction users found for the selected districts.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
+    @endif
+
+    @if($preview['metrics']['users_will_import'] > 0)
+        @push('scripts')
+            <script>
+                (function () {
+                    const form = document.querySelector('[data-user-migration-import]');
+                    if (!form) {
+                        return;
+                    }
+
+                    const selectAll = form.querySelector('[data-import-select-all]');
+                    const userCheckboxes = () => [...form.querySelectorAll('[data-import-user]')];
+                    const countEl = form.querySelector('[data-import-count]');
+
+                    function syncSiteDisabledState(userCheckbox) {
+                        const legacyId = userCheckbox.value;
+                        form.querySelectorAll('[data-import-site][data-import-user-id="' + legacyId + '"]').forEach((siteBox) => {
+                            if (!siteBox.disabled) {
+                                siteBox.disabled = !userCheckbox.checked;
+                            }
+                        });
+                    }
+
+                    function updateImportCount() {
+                        const count = userCheckboxes().filter((box) => box.checked).length;
+                        if (countEl) {
+                            countEl.textContent = String(count);
+                        }
+                        if (selectAll) {
+                            const boxes = userCheckboxes();
+                            selectAll.checked = boxes.length > 0 && boxes.every((box) => box.checked);
+                            selectAll.indeterminate = boxes.some((box) => box.checked) && !selectAll.checked;
+                        }
+                    }
+
+                    userCheckboxes().forEach((box) => {
+                        syncSiteDisabledState(box);
+                        box.addEventListener('change', () => {
+                            syncSiteDisabledState(box);
+                            updateImportCount();
+                        });
+                    });
+
+                    if (selectAll) {
+                        selectAll.addEventListener('change', () => {
+                            userCheckboxes().forEach((box) => {
+                                box.checked = selectAll.checked;
+                                syncSiteDisabledState(box);
+                            });
+                            updateImportCount();
+                        });
+                    }
+
+                    form.addEventListener('submit', (event) => {
+                        userCheckboxes().forEach((box) => {
+                            if (!box.checked) {
+                                box.disabled = true;
+                            }
+                        });
+                        form.querySelectorAll('[data-import-site]').forEach((siteBox) => {
+                            const userBox = form.querySelector('[data-import-user][value="' + siteBox.dataset.importUserId + '"]');
+                            if (userBox && !userBox.checked) {
+                                siteBox.disabled = true;
+                            }
+                        });
+                    });
+
+                    updateImportCount();
+                })();
+            </script>
+        @endpush
     @endif
 @endif
 @endsection

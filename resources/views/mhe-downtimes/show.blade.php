@@ -6,6 +6,20 @@
     :breadcrumbs="['Transactions'=>null,'MHE Downtimes'=>route('mhe-downtimes.index'),($isNew ? 'New' : '#'.$downtime->id)=>null]"
 />
 
+@if(!$isNew && ($downtime->legacy_eagle_eye_id || $downtime->approver_remarks))
+    <div class="alert alert-info">
+        @if($downtime->legacy_eagle_eye_id)
+            <span class="badge text-bg-info">FSC Web Ref #{{ $downtime->legacy_eagle_eye_id }}</span>
+        @endif
+        @if($downtime->approver_remarks)
+            <div class="mt-2">
+                <strong>Approver remarks</strong>
+                <div class="mb-0">{{ $downtime->approver_remarks }}</div>
+            </div>
+        @endif
+    </div>
+@endif
+
 <div class="card mb-3">
     @if($isNew || ($canEdit ?? false) || ($canEditTimes ?? false))
         <form id="downtime-form" method="POST" action="{{ $isNew ? route('mhe-downtimes.store') : route('mhe-downtimes.update', $downtime) }}" @if($isNew) enctype="multipart/form-data" @endif>

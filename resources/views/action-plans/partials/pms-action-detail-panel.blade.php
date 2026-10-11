@@ -82,16 +82,6 @@
             </form>
         @endif
 
-        <div class="d-flex flex-wrap gap-2">
-            @if($canManagePlan && $plan->status !== \App\Enums\ActionPlanStatus::Cancelled && $plan->status !== \App\Enums\ActionPlanStatus::Confirmed)
-                <form method="POST" action="{{ route('action-plans.cancel', $plan) }}" onsubmit="return confirm('Cancel this action plan?')">
-                    @csrf
-                    @if($returnTo)<input type="hidden" name="return_to" value="{{ $returnTo }}">@endif
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
-                </form>
-            @endif
-        </div>
-
         @if(auth()->user()->can('confirm', $plan) && $plan->status === \App\Enums\ActionPlanStatus::WaitingForFastConfirmation)
             <div class="d-flex flex-wrap gap-2 mt-3">
                 <form method="POST" action="{{ route('action-plan-confirmations.confirm', $plan) }}" onsubmit="return confirm('Confirm this action plan?')">

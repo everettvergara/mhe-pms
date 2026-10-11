@@ -119,6 +119,14 @@
                 <i class="bi bi-person-down me-2"></i>User Migration Tool
             </a>
         @endif
+        @if($user->isSuperAdmin())
+            <a href="{{ route('system.downtime-migration-tool.index') }}" class="nav-link {{ $active('system.downtime-migration-tool.*') }}">
+                <i class="bi bi-arrow-down-up me-2"></i>Migrate MHE Downtime Data
+            </a>
+            <a href="{{ route('system.clear-data.index') }}" class="nav-link {{ $active('system.clear-data.*') }}">
+                <i class="bi bi-eraser me-2"></i>Clear Data
+            </a>
+        @endif
         @if($can('activity-logs.view'))
             <a href="{{ route('activity-logs.index') }}" class="nav-link {{ $active('activity-logs.*') }}">
                 <i class="bi bi-clock-history me-2"></i>Activity Logs

@@ -24,6 +24,11 @@ class ImportUserMigrationRequest extends FormRequest
             'preview_token' => ['required', 'string'],
             'confirmation' => ['required', 'string', Rule::in([config('fsc_web_import.confirmation_phrase')])],
             'deactivate' => ['nullable', 'boolean'],
+            'import_users' => ['required', 'array', 'min:1'],
+            'import_users.*' => ['required', 'integer', 'min:1'],
+            'import_sites' => ['nullable', 'array'],
+            'import_sites.*' => ['nullable', 'array'],
+            'import_sites.*.*' => ['required', 'string', 'max:30'],
         ];
     }
 
@@ -35,6 +40,42 @@ class ImportUserMigrationRequest extends FormRequest
         return [
             'confirmation.in' => 'Type the confirmation phrase exactly before importing.',
             'preview_token.required' => 'Run preview before importing.',
+            'import_users.required' => 'Select at least one user to import.',
+            'import_users.min' => 'Select at least one user to import.',
+        ];
+    }
+
+    /**
+     * @return array{legacy_ids: list<int>, site_codes_by_legacy_id: array<int, list<string>>}
+     */
+    public function importSelection(): array
+    {
+        $legacyIds = array_map(intval(...), (array) $this->input('import_users', []));
+        $legacyIds = array_values(array_unique($legacyIds));
+        sort($legacyIds);
+
+        $siteCodesByLegacyId = [];
+        $rawSites = (array) $this->input('import_sites', []);
+
+        foreach ($legacyIds as $legacyId) {
+            $codes = $rawSites[$legacyId] ?? $rawSites[(string) $legacyId] ?? [];
+            $normalized = [];
+
+            foreach ((array) $codes as $code) {
+                $code = trim((string) $code);
+
+                if ($code !== '') {
+                    $normalized[$code] = $code;
+                }
+            }
+
+            $siteCodesByLegacyId[$legacyId] = array_values($normalized);
+            sort($siteCodesByLegacyId[$legacyId]);
+        }
+
+        return [
+            'legacy_ids' => $legacyIds,
+            'site_codes_by_legacy_id' => $siteCodesByLegacyId,
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ActionPlanStatus;
+use App\Enums\ChecklistAnswer;
 use App\Enums\DowntimeActionPlanStatus;
 use App\Enums\PmsStatus;
 use App\Enums\RecordStatus;
@@ -12,6 +13,7 @@ use App\Models\MheDowntimeActionPlan;
 use App\Models\MheInventory;
 use App\Models\PmsHeader;
 use App\Models\User;
+use App\Support\SupplierWaitingItem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -61,27 +63,51 @@ class DashboardService
     {
         $units = $this->supplierInventoryUnits($user);
         $pmsWaitingQuery = $this->pmsWaitingImplementationQuery($user);
+        $pmsMissingQuery = $this->pmsMissingActionItemQuery($user);
         $downtimeWaitingQuery = $this->downtimeWaitingImplementationQuery($user);
+        $downtimeMissingQuery = $this->downtimeMissingActionItemQuery($user);
 
         return [
             'kpis' => [
                 'pms_month_done' => $units->where('pms_this_month', true)->count(),
                 'pms_month_total' => $units->count(),
-                'pms_waiting_implementation' => (clone $pmsWaitingQuery)->count(),
+                'pms_waiting_implementation' => (clone $pmsWaitingQuery)->count() + (clone $pmsMissingQuery)->count(),
                 'currently_down_units' => $this->currentlyDownUnitCount($user),
-                'downtime_waiting_implementation' => (clone $downtimeWaitingQuery)->count(),
+                'downtime_waiting_implementation' => (clone $downtimeWaitingQuery)->count() + (clone $downtimeMissingQuery)->count(),
             ],
-            'pms_waiting_implementation' => (clone $pmsWaitingQuery)
-                ->with(['pmsDetail.pmsHeader.site'])
-                ->orderBy('timeline_to')
-                ->limit(10)
-                ->get(),
+            'pms_waiting_implementation' => $this->mergeWaitingItems(
+                (clone $pmsMissingQuery)
+                    ->with('site')
+                    ->orderBy('date_from')
+                    ->orderBy('id')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn (PmsHeader $pms): SupplierWaitingItem => $this->pmsMissingWaitingItem($pms)),
+                (clone $pmsWaitingQuery)
+                    ->with(['pmsDetail.pmsHeader.site'])
+                    ->orderBy('timeline_to')
+                    ->orderBy('id')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn (ActionPlan $plan): SupplierWaitingItem => $this->pmsActionPlanWaitingItem($plan)),
+            ),
             'units' => $units->take(10)->values(),
-            'downtime_waiting_implementation' => (clone $downtimeWaitingQuery)
-                ->with(['mheDowntime.site', 'mheDowntime.mheInventory'])
-                ->orderBy('timeline_to')
-                ->limit(10)
-                ->get(),
+            'downtime_waiting_implementation' => $this->mergeWaitingItems(
+                (clone $downtimeMissingQuery)
+                    ->with(['site', 'mheInventory'])
+                    ->orderBy('date_of_incident')
+                    ->orderBy('id')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn (MheDowntime $downtime): SupplierWaitingItem => $this->downtimeMissingWaitingItem($downtime)),
+                (clone $downtimeWaitingQuery)
+                    ->with(['mheDowntime.site', 'mheDowntime.mheInventory'])
+                    ->orderBy('timeline_to')
+                    ->orderBy('id')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn (MheDowntimeActionPlan $plan): SupplierWaitingItem => $this->downtimeActionPlanWaitingItem($plan)),
+            ),
         ];
     }
 
@@ -349,6 +375,124 @@ class DashboardService
         $this->userDataScopeService->scopeMheDowntimeActionPlan($query, $user);
 
         return $query;
+    }
+
+    /**
+     * PMS that still have a No Good checklist line with no action item.
+     *
+     * @return Builder<PmsHeader>
+     */
+    protected function pmsMissingActionItemQuery(User $user): Builder
+    {
+        $query = PmsHeader::query()
+            ->where('status', '!=', PmsStatus::Cancelled)
+            ->whereHas('pmsDetails', function (Builder $detail): void {
+                $detail->where('answer', ChecklistAnswer::NoGood)
+                    ->whereDoesntHave('actionPlans');
+            });
+
+        if ($this->supplierScopeIsEmpty($user)) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        $this->userDataScopeService->scopePmsHeader($query, $user);
+
+        return $query;
+    }
+
+    /**
+     * Posted downtime that has no action items, whether or not the unit is back up.
+     *
+     * @return Builder<MheDowntime>
+     */
+    protected function downtimeMissingActionItemQuery(User $user): Builder
+    {
+        $query = MheDowntime::query()->needsActionPlan();
+
+        if ($this->supplierScopeIsEmpty($user)) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        $this->userDataScopeService->scopeMheDowntime($query, $user);
+
+        return $query;
+    }
+
+    /**
+     * @param  Collection<int, SupplierWaitingItem>  $missing
+     * @param  Collection<int, SupplierWaitingItem>  $plans
+     * @return Collection<int, SupplierWaitingItem>
+     */
+    protected function mergeWaitingItems(Collection $missing, Collection $plans): Collection
+    {
+        return $missing->concat($plans)->take(10)->values();
+    }
+
+    protected function pmsActionPlanWaitingItem(ActionPlan $plan): SupplierWaitingItem
+    {
+        $header = $plan->pmsDetail?->pmsHeader;
+
+        return new SupplierWaitingItem(
+            unit: $this->waitingLabel($header?->unit_number),
+            site: $this->waitingLabel($header?->site?->site_name),
+            action_plan_no: $plan->action_plan_no,
+            title: (string) $plan->title,
+            due: $plan->timeline_to?->format('Y-m-d'),
+            status: $plan->status?->value,
+            missing_action_plan: false,
+            url: $plan->parentShowUrl(),
+        );
+    }
+
+    protected function pmsMissingWaitingItem(PmsHeader $pms): SupplierWaitingItem
+    {
+        return new SupplierWaitingItem(
+            unit: $this->waitingLabel($pms->unit_number),
+            site: $this->waitingLabel($pms->site?->site_name),
+            action_plan_no: null,
+            title: (string) $pms->pms_no,
+            due: null,
+            status: null,
+            missing_action_plan: true,
+            url: route('pms.show', $pms),
+        );
+    }
+
+    protected function downtimeActionPlanWaitingItem(MheDowntimeActionPlan $plan): SupplierWaitingItem
+    {
+        $downtime = $plan->mheDowntime;
+
+        return new SupplierWaitingItem(
+            unit: $this->waitingLabel($downtime?->mheInventory?->unit_no ?: $downtime?->ref_unit_no),
+            site: $this->waitingLabel($downtime?->site?->site_name),
+            action_plan_no: $plan->action_plan_no,
+            title: (string) $plan->title,
+            due: $plan->timeline_to?->format('Y-m-d'),
+            status: $plan->status?->value,
+            missing_action_plan: false,
+            url: $plan->parentShowUrl(),
+        );
+    }
+
+    protected function downtimeMissingWaitingItem(MheDowntime $downtime): SupplierWaitingItem
+    {
+        return new SupplierWaitingItem(
+            unit: $this->waitingLabel($downtime->mheInventory?->unit_no ?: $downtime->ref_unit_no),
+            site: $this->waitingLabel($downtime->site?->site_name),
+            action_plan_no: null,
+            title: (string) $downtime->title,
+            due: null,
+            status: null,
+            missing_action_plan: true,
+            url: route('mhe-downtimes.show', $downtime),
+        );
+    }
+
+    protected function waitingLabel(?string $value): string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? '—' : $value;
     }
 
     protected function currentlyDownUnitCount(User $user): int

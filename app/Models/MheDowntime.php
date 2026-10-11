@@ -16,6 +16,7 @@ class MheDowntime extends Model
 
     protected $fillable = [
         'legacy_eagle_eye_id',
+        'legacy_import_batch_id',
         'title',
         'site_id',
         'mhe_type_id',
@@ -30,6 +31,7 @@ class MheDowntime extends Model
         'time_to',
         'root_cause',
         'description',
+        'approver_remarks',
         'w_spare_unit',
         'status',
         'posted_by',

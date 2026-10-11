@@ -208,6 +208,15 @@ class PmsController extends Controller
         );
     }
 
+    public function searchTechnicians(Request $request): JsonResponse
+    {
+        $this->authorize('create', PmsHeader::class);
+
+        return response()->json(
+            $this->pmsService->searchTechnicians($request->user(), $request->query('q'))
+        );
+    }
+
     /**
      * @return array<string, mixed>
      */

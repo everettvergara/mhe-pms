@@ -92,7 +92,7 @@
                         <div class="row g-2">
                             <div class="col-12">
                                 <label class="form-label small">Title <span class="required-mark">*</span></label>
-                                <input type="text" name="title" id="dt-ap-title" class="form-control form-control-sm" required>
+                                <input type="text" name="title" id="dt-ap-title" class="form-control form-control-sm" autocomplete="off" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small">Description <span class="required-mark">*</span></label>
@@ -100,7 +100,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small">Responsible Person <span class="required-mark">*</span></label>
-                                <input type="text" name="responsible_person" id="dt-ap-responsible-person" class="form-control form-control-sm" required>
+                                <input type="text" name="responsible_person" id="dt-ap-responsible-person" class="form-control form-control-sm" autocomplete="off" required>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small">Timeline From <span class="required-mark">*</span></label>

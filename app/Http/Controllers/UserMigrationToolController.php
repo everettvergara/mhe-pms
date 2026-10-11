@@ -72,6 +72,7 @@ class UserMigrationToolController extends Controller
                 $request->validated('preview_token'),
                 $request->boolean('deactivate'),
                 $request->user()?->id,
+                $request->importSelection(),
             );
         } catch (InvalidArgumentException $exception) {
             return redirect()

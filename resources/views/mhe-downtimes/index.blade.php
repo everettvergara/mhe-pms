@@ -84,7 +84,12 @@
             <tbody>
                 @forelse($records as $record)
                     <tr data-href="{{ route('mhe-downtimes.show', $record) }}">
-                        <td>{{ $record->id }}</td>
+                        <td>
+                            {{ $record->id }}
+                            @if($record->legacy_eagle_eye_id)
+                                <div><span class="badge text-bg-info">FSC Web Ref #{{ $record->legacy_eagle_eye_id }}</span></div>
+                            @endif
+                        </td>
                         <td>{{ $record->title }}</td>
                         <td>{{ $record->site?->site_name }}</td>
                         <td>{{ $record->mheCategory?->name }}</td>
